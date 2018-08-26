@@ -16,7 +16,6 @@
 --
 
 {-# LANGUAGE BangPatterns       #-}
-{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS_HADDOCK hide, not-home #-}
@@ -46,10 +45,7 @@ import Data.Typeable (Typeable)
 import System.IO.Streams (Generator, InputStream)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
-
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative
-#endif
+import Control.Applicative as App
 
 import Network.Http.Internal
 import Network.Http.Utilities
@@ -106,7 +102,7 @@ readResponseHeader i = do
     }
 
 
-parseStatusLine :: Parser (Int,ByteString)
+parseStatusLine :: Parser (StatusCode,ByteString)
 parseStatusLine = do
     sc <- string "HTTP/1." *> satisfy version *> char ' ' *> decimal <* char ' '
     sm <- takeTill (== '\r') <* crlf
@@ -135,7 +131,7 @@ readResponseBody p i1 = do
         Chunked     -> readChunkedBody i1
 
     i3 <- case c of
-        Identity    -> return i2
+        Identity    -> App.pure i2
         Gzip        -> readCompressedBody i2
         Deflate     -> throwIO (UnexpectedCompression $ show c)
 

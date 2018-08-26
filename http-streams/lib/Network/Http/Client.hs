@@ -1,7 +1,7 @@
 --
 -- HTTP client for use with io-streams
 --
--- Copyright © 2012-2014 Operational Dynamics Consulting, Pty Ltd
+-- Copyright © 2012-2018 Operational Dynamics Consulting, Pty Ltd
 --
 -- The code in this file, and the program it is a part of, is
 -- made available to you by its authors as open source software:
@@ -9,17 +9,12 @@
 -- the BSD licence.
 --
 
-{-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS -fno-warn-orphans #-}
-
 -- |
--- Maintainer: Andrew Cowie
--- Stability: Experimental
 --
--- /Overview/
+-- == Overview
 --
 -- A simple HTTP client library, using the Snap Framework's @io-streams@
--- library to handle the streaming I\/O. The @http-streams@ API is designed
+-- library to handle the streaming I\/O. The @http-io-streams@ API is designed
 -- for ease of use when querying web services and dealing with the result.
 --
 -- Given:
@@ -88,7 +83,7 @@
 -- 'Response' and InputStream for you to read from. Of course, messing
 -- around with URLs is all a bit inefficient, so if you already have e.g.
 -- hostname and path, or if you need more control over the request being
--- created, then the underlying @http-streams@ API is simple enough to use
+-- created, then the underlying @http-io-streams@ API is simple enough to use
 -- directly.
 --
 module Network.Http.Client (
@@ -142,7 +137,6 @@ module Network.Http.Client (
     concatHandler,
     concatHandler',
     HttpClientError(..),
-    jsonHandler,
 
     -- * Resource cleanup
     closeConnection,
@@ -171,17 +165,16 @@ module Network.Http.Client (
     modifyContextSSL,
     establishConnection,
 
-    -- * Testing support
-    makeConnection,
-    Headers,
-    getHeaders,
-    getHeadersFull,
+    -- -- * Testing support
+    -- makeConnection,
+    -- Headers,
+    -- getHeaders,
+    -- getHeadersFull,
 
-    -- * Deprecated
-    getRequestHeaders
+    -- -- * Deprecated
+    -- getRequestHeaders
 ) where
 
 import Network.Http.Types
-
 import Network.Http.Connection
 import Network.Http.Inconvenience

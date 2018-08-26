@@ -19,14 +19,13 @@
 --
 
 {-# LANGUAGE BangPatterns       #-}
-{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE MagicHash          #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE Rank2Types         #-}
 {-# LANGUAGE UnboxedTuples      #-}
 {-# OPTIONS_HADDOCK hide, not-home #-}
- 
+
 module Network.Http.Utilities (
     readResponseLine,
     readHeaderFields

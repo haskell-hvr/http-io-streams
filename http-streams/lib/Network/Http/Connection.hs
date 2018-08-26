@@ -9,7 +9,6 @@
 -- the BSD licence.
 --
 
-{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DoAndIfThenElse    #-}
 {-# LANGUAGE OverloadedStrings  #-}
@@ -39,8 +38,7 @@ module Network.Http.Connection (
 ) where
 
 import Blaze.ByteString.Builder (Builder)
-import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString,
-                                                      toByteString)
+import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString, toByteString)
 import qualified Blaze.ByteString.Builder.HTTP as Builder (chunkedTransferEncoding, chunkedTransferTerminator)
 import Control.Exception (bracket)
 import Data.ByteString (ByteString)
@@ -52,10 +50,7 @@ import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.SSL as Streams hiding (connect)
-
-#if !MIN_VERSION_base(4,8,0)
-import Data.Monoid (mappend, mempty)
-#endif
+import qualified Data.Monoid as Mon
 
 import Network.Http.Internal
 import Network.Http.ResponseParser
@@ -584,7 +579,7 @@ debugHandler p i = do
 --
 -- | Sometimes you just want the entire response body as a single blob.
 -- This function concatonates all the bytes from the response into a
--- ByteString. If using the main @http-streams@ API, you would use it
+-- ByteString. If using the main @http-io-streams@ API, you would use it
 -- as follows:
 --
 -- >    ...
@@ -613,11 +608,10 @@ debugHandler p i = do
 concatHandler :: Response -> InputStream ByteString -> IO ByteString
 concatHandler _ i1 = do
     i2 <- Streams.map Builder.fromByteString i1
-    x <- Streams.fold mappend mempty i2
+    x <- Streams.fold Mon.mappend Mon.mempty i2
     return $ Builder.toByteString x
 
 
---
 -- | Shutdown the connection. You need to call this release the
 -- underlying socket file descriptor and related network resources. To
 -- do so reliably, use this in conjunction with 'openConnection' in a

@@ -32,17 +32,25 @@ module Network.Http.Connection (
     UnexpectedCompression,
     emptyBody,
     fileBody,
+    bytestringBody,
+    lazyBytestringBody,
+    utf8TextBody,
+    utf8LazyTextBody,
     inputStreamBody,
     debugHandler,
     concatHandler
 ) where
 
 import Blaze.ByteString.Builder (Builder)
-import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString, toByteString)
+import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString, toByteString, fromLazyByteString)
+import qualified Blaze.ByteString.Builder.Char.Utf8 as Builder (fromText, fromLazyText)
 import qualified Blaze.ByteString.Builder.HTTP as Builder (chunkedTransferEncoding, chunkedTransferTerminator)
 import Control.Exception (bracket)
 import Data.ByteString (ByteString)
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as S
+import Data.Text (Text)
+import qualified Data.Text.Lazy as TL (Text)
 import Network.Socket
 import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSL, SSLContext)
@@ -493,6 +501,37 @@ receiveResponseRaw c handler = do
 emptyBody :: OutputStream Builder -> IO ()
 emptyBody _ = return ()
 
+-- | Convenience function for sending a strict 'ByteString' as the body of the request.
+--
+-- >     sendRequest c q (bytestringBody "PING")
+--
+-- @since 0.1.1.0
+bytestringBody :: ByteString -> OutputStream Builder -> IO ()
+bytestringBody bs = Streams.write (Just $! Builder.fromByteString bs)
+
+-- | Convenience function for sending a lazy 'BL.ByteString' as the body of the request.
+--
+-- >     sendRequest c q (lazyBytestringBody "PING")
+--
+-- @since 0.1.1.0
+lazyBytestringBody :: BL.ByteString -> OutputStream Builder -> IO ()
+lazyBytestringBody bs = Streams.write (Just $ Builder.fromLazyByteString bs)
+
+-- | Convenience function for sending a 'Text' value as the (UTF-8 encoded) body of the request.
+--
+-- >     sendRequest c q (utf8TextBody "PING")
+--
+-- @since 0.1.1.0
+utf8TextBody :: Text -> OutputStream Builder -> IO ()
+utf8TextBody t = Streams.write (Just $! Builder.fromText t)
+
+-- | Convenience function for sending a lazy 'TL.Text' value as the (UTF-8 encoded) body of the request.
+--
+-- >     sendRequest c q (utf8LazyTextBody "PING")
+--
+-- @since 0.1.1.0
+utf8LazyTextBody :: TL.Text -> OutputStream Builder -> IO ()
+utf8LazyTextBody t = Streams.write (Just $ Builder.fromLazyText t)
 
 --
 -- | Specify a local file to be sent to the server as the body of the

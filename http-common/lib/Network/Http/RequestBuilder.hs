@@ -43,7 +43,7 @@ import Data.ByteString.Char8 ()
 import qualified Data.ByteString.Char8 as S
 import Data.Int (Int64)
 import Data.List (intersperse)
-import Data.Monoid (mconcat)
+import Data.Monoid as Mon (mconcat)
 
 import Network.Http.Internal
 
@@ -136,7 +136,7 @@ setHostname h' p = do
     v' :: ByteString
     v' = if p == 80
         then h'
-        else Builder.toByteString $ mconcat
+        else Builder.toByteString $ Mon.mconcat
            [Builder.fromByteString h',
             Builder.fromString ":",
             Builder.fromShow p]

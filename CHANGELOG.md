@@ -1,5 +1,6 @@
 ### 0.1.1.0
 
+* New function `getHeaderMap` for exporting all response headers at once
 * Add convenience functions `bytestringBody`, `lazyBytestringBody`, `utf8TextBody`, `utf8LazyTextBody`
 * Add support for Brotli HTTP compression
 

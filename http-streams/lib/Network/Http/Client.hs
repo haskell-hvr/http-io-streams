@@ -137,6 +137,7 @@ module Network.Http.Client (
     getStatusCode,
     getStatusMessage,
     getHeader,
+    getHeaderMap,
     debugHandler,
     concatHandler,
     concatHandler',

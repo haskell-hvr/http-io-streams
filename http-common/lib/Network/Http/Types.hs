@@ -49,6 +49,7 @@ module Network.Http.Types (
     getStatusCode,
     getStatusMessage,
     getHeader,
+    getHeaderMap,
     Method(..),
 
     -- * Headers

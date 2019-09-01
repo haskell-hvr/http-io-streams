@@ -33,6 +33,7 @@ module Network.Http.Internal (
     getStatusCode,
     getStatusMessage,
     getHeader,
+    getHeaderMap,
     Method(..),
     Headers,
     emptyHeaders,
@@ -302,6 +303,12 @@ getHeader p k =
     lookupHeader h k
   where
     h = pHeaders p
+
+-- | Expose all headers in the response as (case-insenstiive) key-value 'Map'ping.
+--
+-- @since 0.1.1.0
+getHeaderMap :: Response -> Map (CI ByteString) ByteString
+getHeaderMap = unWrap . pHeaders
 
 --
 -- | Accessors common to both the outbound and return sides of an HTTP

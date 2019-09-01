@@ -16,6 +16,7 @@
 --
 
 {-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS_HADDOCK hide, not-home #-}
@@ -50,6 +51,17 @@ import Control.Applicative as App
 import Network.Http.Internal
 import Network.Http.Utilities
 
+#if defined(MIN_VERSION_brotli_streams)
+import qualified System.IO.Streams.Brotli as Brotli
+
+brotliDecompress :: InputStream ByteString -> IO (InputStream ByteString)
+brotliDecompress = Brotli.decompress
+#else
+brotliDecompress :: InputStream ByteString -> IO (InputStream ByteString)
+brotliDecompress _ = throwIO (UnexpectedCompression "br")
+#endif
+
+
 {-
     The chunk size coming down from the server is somewhat arbitrary;
     it's really just an indication of how many bytes need to be read
@@ -79,9 +91,12 @@ readResponseHeader i = do
             Nothing -> None
 
     let ce = case lookupHeader h "Content-Encoding" of
-            Just x' -> if mk x' == "gzip"
-                        then Gzip
-                        else Identity
+            Just x' -> case mk x' of
+                         "gzip"     -> Gzip
+                         "br"       -> Br
+                         "deflate"  -> Deflate
+                         "identity" -> Identity
+                         _          -> UnknownCE x'
             Nothing -> Identity
 
     let nm = case lookupHeader h "Content-Length" of
@@ -132,8 +147,10 @@ readResponseBody p i1 = do
 
     i3 <- case c of
         Identity    -> App.pure i2
-        Gzip        -> readCompressedBody i2
-        Deflate     -> throwIO (UnexpectedCompression $ show c)
+        Gzip        -> Streams.gunzip i2
+        Br          -> brotliDecompress i2
+        Deflate     -> throwIO (UnexpectedCompression "deflate")
+        UnknownCE x -> throwIO (UnexpectedCompression (S.unpack x))
 
     return i3
   where
@@ -267,11 +284,3 @@ readFixedLengthBody i1 n = do
 readUnlimitedBody :: InputStream ByteString -> IO (InputStream ByteString)
 readUnlimitedBody i1 = do
     return i1
-
-
----------------------------------------------------------------------
-
-readCompressedBody :: InputStream ByteString -> IO (InputStream ByteString)
-readCompressedBody i1 = do
-    i2 <- Streams.gunzip i1
-    return i2

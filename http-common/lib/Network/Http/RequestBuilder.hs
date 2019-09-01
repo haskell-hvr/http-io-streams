@@ -101,7 +101,8 @@ http :: Method -> ByteString -> RequestBuilder ()
 http m p' = do
     q <- get
     let h1 = qHeaders q
-    let h2 = updateHeader h1 "Accept-Encoding" "gzip"
+    let h2 = updateHeader h1 "Accept-Encoding" $ if hasBrotli then "br, gzip"
+                                                              else "gzip"
 
     let e  = case m of
             PUT  -> Chunking

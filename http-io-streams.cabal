@@ -30,9 +30,14 @@ source-repository    head
   type:              git
   location:          https://github.com/hvr/http-io-streams.git
 
+flag brotli
+  manual:  True
+  default: True
+  description: Build with support for <http://brotli.org Brotli> (<https://tools.ietf.org/html/rfc7932 RFC7932>) compression algorithm for <https://en.wikipedia.org/wiki/HTTP_compression HTTP compression>.
+
 common settings
   build-depends:
-    , base                 >= 4.5 && < 4.13
+    , base                 >= 4.5 && < 4.14
     , blaze-builder       ^>= 0.4.1.0
     , bytestring          ^>= 0.10.0.0
     , case-insensitive    ^>= 1.2.0.11
@@ -51,13 +56,16 @@ library
   import: settings
 
   -- http-streams
+  if flag(brotli)
+    build-depends:
+      brotli-streams      ^>= 0.0.0.0
 
   build-depends:
     , HsOpenSSL           ^>= 0.11.2
     , attoparsec          ^>= 0.13.2.2
     , directory           ^>= 1.2.0.1 || ^>= 1.3.0.0
     , io-streams          ^>= 1.5.0.1
-    , network             ^>= 2.6.0.0 || ^>= 2.7.0.0
+    , network             ^>= 2.6.0.0 || ^>= 2.7.0.0 || ^>= 2.8.0.0 || ^>= 3.0.0.0
     , network-uri         ^>= 2.6.0.0
     , openssl-streams     ^>= 1.2.1.3
     , text                ^>= 1.2.3.0

@@ -10,6 +10,7 @@
 --
 
 {-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS_HADDOCK hide, prune #-}
@@ -43,6 +44,8 @@ module Network.Http.Internal (
     HttpType (getHeaders),
     HttpParseException(..),
 
+    hasBrotli,
+
     -- for testing
     composeRequestBytes,
     composeResponseBytes
@@ -70,7 +73,7 @@ import Data.Map (Map)
 
 import Data.Int (Int64)
 import Data.List (foldl')
-import Data.Monoid (mconcat, mempty)
+import Data.Monoid as Mon (mconcat, mempty)
 import Data.Typeable (Typeable)
 import Data.Word (Word16)
 
@@ -83,6 +86,14 @@ import Data.Word (Word16)
 type Hostname = ByteString
 
 type Port = Word16
+
+{-# INLINE hasBrotli #-}
+hasBrotli :: Bool
+#if defined(MIN_VERSION_brotli_streams)
+hasBrotli = True
+#else
+hasBrotli = False
+#endif
 
 --
 -- | HTTP Methods, as per RFC 2616
@@ -178,7 +189,7 @@ composeRequestBytes q h' =
         headerFields,
         crlf]
   where
-    requestline = mconcat
+    requestline = Mon.mconcat
        [method,
         sp,
         uri,
@@ -250,7 +261,7 @@ instance Show Response where
 
 data TransferEncoding = None | Chunked
 
-data ContentEncoding = Identity | Gzip | Deflate
+data ContentEncoding = Identity | Gzip | Deflate | Br {- Brotli -} | UnknownCE !ByteString
     deriving (Show)
 
 
@@ -366,7 +377,7 @@ instance Show Headers where
     show x = S.unpack $ S.filter (/= '\r') $ Builder.toByteString $ joinHeaders $ unWrap x
 
 joinHeaders :: Map (CI ByteString) ByteString -> Builder
-joinHeaders m = Map.foldrWithKey combine mempty m
+joinHeaders m = Map.foldrWithKey combine Mon.mempty m
 
 combine :: CI ByteString -> ByteString -> Builder -> Builder
 combine k v acc =

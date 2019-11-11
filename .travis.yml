@@ -7,9 +7,10 @@ cache:
   directories:
    - $HOME/.cabal/store
 
-cabal: 2.4
+cabal: 3.0
 ghc:
-  - "8.6.3"
+  - "8.8.1"
+  - "8.6.5"
   - "8.4.4"
   - "8.2.2"
   - "8.0.2"
@@ -17,6 +18,9 @@ ghc:
   - "7.8.4"
   - "7.6.3"
   - "7.4.2"
+
+before_install:
+  - sudo apt-get -y install libbrotli-dev
 
 install:
  - cabal --version

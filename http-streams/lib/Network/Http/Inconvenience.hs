@@ -263,7 +263,7 @@ connectionAddressFromURL r' = do
 --
 -- @since 0.1.1.0
 connectionAddressFromURI :: URI -> Either String (ConnectionAddress, String, ByteString, String)
-connectionAddressFromURI u = addxinfo <$>
+connectionAddressFromURI u = fmap addxinfo $
     case map toLower (uriScheme u) of
         "http:"      -> do
           _ <- getUrlPath

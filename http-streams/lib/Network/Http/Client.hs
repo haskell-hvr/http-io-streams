@@ -170,6 +170,12 @@ module Network.Http.Client (
     modifyContextSSL,
     establishConnection,
 
+    -- * Alternative 'ConnectionAddress' API
+    ConnectionAddress(..),
+    connectionAddressFromURI,
+    connectionAddressFromURL,
+    openConnectionAddress,
+
     -- -- * Testing support
     -- makeConnection,
     -- Headers,

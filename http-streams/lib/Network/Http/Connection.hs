@@ -285,13 +285,11 @@ openConnectionUnix path = do
     o2 <- Streams.builderStream o1
 
     return Connection {
-        cHost  = path',
+        cHost  = S.pack path,
         cClose = close s,
         cOut   = o2,
         cIn    = i
     }
-  where
-    path'  = S.pack path
 
 --
 -- | Having composed a 'Request' object with the headers and metadata for

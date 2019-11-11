@@ -30,6 +30,11 @@ module Network.Http.Inconvenience (
     TooManyRedirects(..),
     HttpClientError(..),
 
+    ConnectionAddress(..),
+    connectionAddressFromURI,
+    connectionAddressFromURL,
+    openConnectionAddress,
+
         -- for testing
     splitURI
 ) where
@@ -39,11 +44,12 @@ import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       fromWord8, toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromString)
 import Control.Exception (Exception, bracket, throw)
+import Control.Monad (when, unless)
 import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.ByteString.Internal (c2w, w2c)
-import Data.Char (intToDigit)
+import Data.Char (intToDigit, toLower)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
@@ -55,7 +61,7 @@ import Data.Word (Word16)
 import GHC.Exts
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), isAbsoluteURI,
-                    parseRelativeReference, parseURI, uriToString)
+                    parseRelativeReference, parseURI, uriToString, unEscapeString)
 import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
@@ -206,6 +212,98 @@ establish u =
     ports = case uriPort auth of
         ""  -> 443
         _   -> read $ tail $ uriPort auth :: Word16
+
+
+-- | HTTP connection target
+--
+-- See also 'connectionAddressFromURL' and 'connectionAddressFromURI'.
+--
+-- @since 0.1.1.0
+data ConnectionAddress
+  = ConnectionAddressHttp     !Hostname !Word16 -- ^ Represents @http:\/\/host:port@
+  | ConnectionAddressHttps    !Hostname !Word16 -- ^ Represents @https:\/\/host:port@
+  | ConnectionAddressHttpUnix FilePath -- ^ Represents @http+unix:\/\/%2Fsome%2Fpath%2Fsocket@ or @unix:\/some\/path\/socket@
+  deriving Show
+
+-- | Open a 'Connection' to the specified 'ConnectionAddress'
+--
+-- This is a simple wrapper over 'openConnection', 'openConnectionSSL', and 'openConnectionUnix'.
+--
+-- A subtle difference between @'openConnectionUnix' fp@ and @'openConnectionAddress' ('ConnectionAddressHttpUnix' fp)@ is that the latter sends an empty (but valid) @Host:@ HTTP header by default (unless overriden by 'setHostname').
+--
+-- This operation is often used in combination with 'withConnection'.
+--
+-- @since 0.1.1.0
+openConnectionAddress :: ConnectionAddress -> IO Connection
+openConnectionAddress ca = case ca of
+  ConnectionAddressHttp  host port  -> openConnection host port
+  ConnectionAddressHttps host ports -> do
+    ctx <- readIORef global
+    openConnectionSSL ctx host ports
+  ConnectionAddressHttpUnix fp -> do
+    c <- openConnectionUnix fp
+    return c { cHost = mempty } -- NB: HTTP RFC allows empty Host: headers
+
+-- | Decode 'URL' into 'ConnectionAddress' and URL path.
+--
+-- The 'URL' argument is expected to be properly escaped according to RFC 3986.
+--
+-- This is a wrapper over 'connectionAddressFromURI'
+--
+-- @since 0.1.1.0
+connectionAddressFromURL :: URL -> Either String (ConnectionAddress, ByteString)
+connectionAddressFromURL r' = do
+  r <- either (\_ -> Left "invalid UTF-8 encoding") return (T.decodeUtf8' r')
+  u <- maybe (Left "invalid URI syntax") return (parseURI (T.unpack r))
+  connectionAddressFromURI u
+
+-- | Decode 'URI' (from the @network-uri@ package) into 'ConnectionAddress' and (escaped) URL path.
+--
+-- See also 'connectionAddressFromURL'
+--
+-- @since 0.1.1.0
+connectionAddressFromURI :: URI -> Either String (ConnectionAddress, ByteString)
+connectionAddressFromURI u =
+    case map toLower (uriScheme u) of
+        "http:"      -> Right (ConnectionAddressHttp host (port 80), urlpath)
+        "https:"     -> Right (ConnectionAddressHttps host (port 443), urlpath)
+        "unix:" -> do
+          noPort
+          noHost
+          when (null (uriPath u)) $
+            Left "invalid empty path in URI"
+          unless (null (uriQuery u)) $
+            Left "invalid query component in URI"
+          return (ConnectionAddressHttpUnix (uriPath u), "") -- bug-compatible semantics
+        "http+unix:" -> do
+          noPort
+          fp <- getUnixPath
+          return (ConnectionAddressHttpUnix fp, urlpath)
+        _ -> Left ("Unknown URI scheme " ++ uriScheme u)
+  where
+    auth = case uriAuthority u of
+        Just x  -> x
+        Nothing -> URIAuth "" "localhost" ""
+
+    noPort = if null (uriPort auth) then Right () else Left "invalid port number in URI"
+    noHost = case uriAuthority u of
+               Nothing -> return ()
+               Just (URIAuth "" "" "") -> return ()
+               Just _ -> Left "invalid host component in uri"
+
+    getUnixPath = case uriAuthority u of
+                   Nothing -> Left "missing host component in uri"
+                   Just a
+                     | null (uriRegName a) -> Left "missing host component in uri"
+                     | otherwise -> Right (unEscapeString (uriRegName a))
+
+    urlpath = S.pack (uriPath u ++ uriQuery u)
+
+    host = S.pack (uriRegName auth)
+
+    port def = case uriPort auth of
+      ""  -> def
+      _   -> read $ tail $ uriPort auth :: Word16
 
 
 --

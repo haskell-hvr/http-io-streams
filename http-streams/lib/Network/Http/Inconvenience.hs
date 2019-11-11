@@ -2,6 +2,7 @@
 -- HTTP client for use with io-streams
 --
 -- Copyright © 2012-2018 Operational Dynamics Consulting, Pty Ltd
+--           © 2018-2019 Herbert Valerio Riedel
 --
 -- The code in this file, and the program it is a part of, is
 -- made available to you by its authors as open source software:
@@ -49,7 +50,7 @@ import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.ByteString.Internal (c2w, w2c)
-import Data.Char (intToDigit, toLower)
+import Data.Char (intToDigit, toLower, digitToInt, isHexDigit)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
@@ -61,7 +62,7 @@ import Data.Word (Word16)
 import GHC.Exts (Int(..),word2Int#, uncheckedShiftRL#)
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), isAbsoluteURI,
-                    parseRelativeReference, parseURI, uriToString, unEscapeString)
+                    parseRelativeReference, parseURI, uriToString)
 import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
@@ -86,6 +87,16 @@ import System.Directory (doesDirectoryExist)
 type URL = ByteString
 
 ------------------------------------------------------------------------------
+
+unescBytes :: [Char] -> ByteString
+unescBytes = S.pack . go
+  where
+    go [] = []
+    go ('%':h:l:rest)
+      | isHexDigit h, isHexDigit l = toEnum b : go rest
+      where
+        b = (16 * digitToInt h) + digitToInt l
+    go (c:rest) = c : go rest
 
 --
 -- | URL-escapes a string (see
@@ -222,14 +233,14 @@ establish u =
 data ConnectionAddress
   = ConnectionAddressHttp     !Hostname !Word16 -- ^ Represents @http:\/\/host:port@
   | ConnectionAddressHttps    !Hostname !Word16 -- ^ Represents @https:\/\/host:port@
-  | ConnectionAddressHttpUnix FilePath -- ^ Represents @http+unix:\/\/%2Fsome%2Fpath%2Fsocket@ or @unix:\/some\/path\/socket@
+  | ConnectionAddressHttpUnix !ByteString -- ^ Represents @http+unix:\/\/%2Fsome%2Fpath%2Fsocket@ or @unix:\/some\/path\/socket@ ('ByteString' denotes raw filepath and must be at most 104 bytes long)
   deriving Show
 
 -- | Open a 'Connection' to the specified 'ConnectionAddress'
 --
 -- This is a simple wrapper over 'openConnection', 'openConnectionSSL', and 'openConnectionUnix'.
 --
--- A subtle difference between @'openConnectionUnix' fp@ and @'openConnectionAddress' ('ConnectionAddressHttpUnix' fp)@ is that the latter sends an empty (but valid) @Host:@ HTTP header by default (unless overriden by 'setHostname').
+-- A subtle difference between @'openConnectionUnix' fp@ and @'openConnectionAddress' ('ConnectionAddressHttpUnix' fp)@ is that the latter sends an empty (but valid) @Host:@ HTTP header by default (unless overriden by 'setHostname'); moreover 'openConnectionUnix' only works with 'FilePath's containing only code-points within the ISO-8859-1 range.
 --
 -- This operation is often used in combination with 'withConnection'.
 --
@@ -241,7 +252,7 @@ openConnectionAddress ca = case ca of
     ctx <- readIORef global
     openConnectionSSL ctx host ports
   ConnectionAddressHttpUnix fp -> do
-    c <- openConnectionUnix fp
+    c <- openConnectionUnix (S.unpack fp)
     return c { cHost = mempty } -- NB: HTTP RFC allows empty Host: headers
 
 -- | Decode 'URL' into 'ConnectionAddress', user-info-part, (escaped) URL path, and optional fragment.
@@ -275,10 +286,17 @@ connectionAddressFromURI u = fmap addxinfo $
           noPort
           noHost
           when (null (uriPath u)) $
-            Left "invalid empty path in URI"
+            Left "invalid empty path in unix: URI"
           unless (null (uriQuery u)) $
-            Left "invalid query component in URI"
-          return (ConnectionAddressHttpUnix (uriPath u), "") -- bug-compatible semantics
+            Left "invalid query component in unix: URI"
+          unless (null (uriFragment u)) $
+            Left "invalid fragment component in unix: URI"
+          let rfp = unescBytes (uriPath u)
+          when (S.length rfp > 104) $
+            Left "unix domain socket path must be at most 104 bytes long"
+          when (S.elem '\x00' rfp) $
+            Left "unix domain socket path must not contain NUL bytes"
+          return (ConnectionAddressHttpUnix rfp, "")
         "http+unix:" -> do
           noPort
           fp <- getUnixPath
@@ -303,7 +321,13 @@ connectionAddressFromURI u = fmap addxinfo $
 
     getUnixPath = case uriRegName auth of
                    "" -> Left "missing/empty host component in uri"
-                   fp -> Right (unEscapeString fp)
+                   fp -> do
+                     let rfp = unescBytes fp
+                     when (S.length rfp > 104) $
+                       Left "unix domain socket path must be at most 104 bytes long"
+                     when (S.elem '\x00' rfp) $
+                       Left "unix domain socket path must not contain NUL bytes"
+                     Right rfp
 
     urlpath = S.pack (uriPath u ++ uriQuery u)
 

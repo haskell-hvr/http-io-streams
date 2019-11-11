@@ -7,7 +7,7 @@ cache:
   directories:
    - $HOME/.cabal/store
 
-cabal: 3.0
+cabal: "3.0"
 ghc:
   - "8.8.1"
   - "8.6.5"
@@ -25,8 +25,10 @@ before_install:
 install:
  - cabal --version
  - ghc --version
+ - "cabal user-config update -a 'http-transport: plain-http'"
 
 script:
  - cabal v2-update
  - cabal v2-build
+ - cabal v2-build --constraint 'http-io-streams -brotli'
  - cabal check

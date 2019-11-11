@@ -58,7 +58,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Data.Typeable (Typeable)
 import Data.Word (Word16)
-import GHC.Exts
+import GHC.Exts (Int(..),word2Int#, uncheckedShiftRL#)
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), isAbsoluteURI,
                     parseRelativeReference, parseURI, uriToString, unEscapeString)
@@ -244,29 +244,33 @@ openConnectionAddress ca = case ca of
     c <- openConnectionUnix fp
     return c { cHost = mempty } -- NB: HTTP RFC allows empty Host: headers
 
--- | Decode 'URL' into 'ConnectionAddress' and URL path.
+-- | Decode 'URL' into 'ConnectionAddress', user-info-part, (escaped) URL path, and optional fragment.
 --
 -- The 'URL' argument is expected to be properly escaped according to RFC 3986.
 --
 -- This is a wrapper over 'connectionAddressFromURI'
 --
 -- @since 0.1.1.0
-connectionAddressFromURL :: URL -> Either String (ConnectionAddress, ByteString)
+connectionAddressFromURL :: URL -> Either String (ConnectionAddress, String, ByteString, String)
 connectionAddressFromURL r' = do
   r <- either (\_ -> Left "invalid UTF-8 encoding") return (T.decodeUtf8' r')
   u <- maybe (Left "invalid URI syntax") return (parseURI (T.unpack r))
   connectionAddressFromURI u
 
--- | Decode 'URI' (from the @network-uri@ package) into 'ConnectionAddress' and (escaped) URL path.
+-- | Decode 'URI' (from the @network-uri@ package) into 'ConnectionAddress', user-info part, (escaped) URL path, and optional fragment.
 --
 -- See also 'connectionAddressFromURL'
 --
 -- @since 0.1.1.0
-connectionAddressFromURI :: URI -> Either String (ConnectionAddress, ByteString)
-connectionAddressFromURI u =
+connectionAddressFromURI :: URI -> Either String (ConnectionAddress, String, ByteString, String)
+connectionAddressFromURI u = addxinfo <$>
     case map toLower (uriScheme u) of
-        "http:"      -> Right (ConnectionAddressHttp host (port 80), urlpath)
-        "https:"     -> Right (ConnectionAddressHttps host (port 443), urlpath)
+        "http:"      -> do
+          _ <- getUrlPath
+          return (ConnectionAddressHttp host (port 80), urlpath)
+        "https:"     -> do
+          _ <- getUrlPath
+          return (ConnectionAddressHttps host (port 443), urlpath)
         "unix:" -> do
           noPort
           noHost
@@ -281,9 +285,11 @@ connectionAddressFromURI u =
           return (ConnectionAddressHttpUnix fp, urlpath)
         _ -> Left ("Unknown URI scheme " ++ uriScheme u)
   where
+    addxinfo (ca,p) = (ca, uriUserInfo auth, p, uriFragment u)
+
     auth = case uriAuthority u of
         Just x  -> x
-        Nothing -> URIAuth "" "localhost" ""
+        Nothing -> URIAuth "" "" ""
 
     noPort = if null (uriPort auth) then Right () else Left "invalid port number in URI"
     noHost = case uriAuthority u of
@@ -291,11 +297,13 @@ connectionAddressFromURI u =
                Just (URIAuth "" "" "") -> return ()
                Just _ -> Left "invalid host component in uri"
 
-    getUnixPath = case uriAuthority u of
-                   Nothing -> Left "missing host component in uri"
-                   Just a
-                     | null (uriRegName a) -> Left "missing host component in uri"
-                     | otherwise -> Right (unEscapeString (uriRegName a))
+    getUrlPath = case uriRegName auth of
+                   "" -> Left "missing/empty host component in uri"
+                   p  -> Right p
+
+    getUnixPath = case uriRegName auth of
+                   "" -> Left "missing/empty host component in uri"
+                   fp -> Right (unEscapeString fp)
 
     urlpath = S.pack (uriPath u ++ uriQuery u)
 

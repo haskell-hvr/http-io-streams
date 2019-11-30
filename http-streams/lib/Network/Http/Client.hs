@@ -133,6 +133,7 @@ module Network.Http.Client (
     receiveResponse,
     receiveResponseRaw,
     unsafeReceiveResponse,
+    unsafeReceiveResponseRaw,
     UnexpectedCompression,
     StatusCode,
     getStatusCode,

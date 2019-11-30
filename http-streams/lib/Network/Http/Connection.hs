@@ -30,6 +30,7 @@ module Network.Http.Connection (
     receiveResponse,
     receiveResponseRaw,
     unsafeReceiveResponse,
+    unsafeReceiveResponseRaw,
     UnexpectedCompression,
     emptyBody,
     fileBody,
@@ -499,10 +500,24 @@ receiveResponseRaw c handler = do
 -- if the handler will fully consume the body, there is no body, or when
 -- the connection is not being reused (no pipelining).
 --
+-- @since 0.1.2.0
 unsafeReceiveResponse :: Connection -> (Response -> InputStream ByteString -> IO β) -> IO β
 unsafeReceiveResponse c handler = do
     p  <- readResponseHeader i
     i' <- readResponseBody p i
+
+    handler p i'
+  where
+    i = cIn c
+
+
+-- | Variant of 'unsafeReceiveResponse' in the spirit of 'receiveResponseRaw'
+--
+-- @since 0.1.2.0
+unsafeReceiveResponseRaw :: Connection -> (Response -> InputStream ByteString -> IO β) -> IO β
+unsafeReceiveResponseRaw c handler = do
+    p  <- readResponseHeader i
+    i' <- readResponseBody p { pContentEncoding = Identity } i
 
     handler p i'
   where

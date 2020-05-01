@@ -2,7 +2,7 @@
 -- HTTP client for use with io-streams
 --
 -- Copyright © 2012-2018 Operational Dynamics Consulting, Pty Ltd
---           © 2018-2019 Herbert Valerio Riedel
+--           © 2018-2020 Herbert Valerio Riedel
 --
 -- The code in this file, and the program it is a part of, is
 -- made available to you by its authors as open source software:
@@ -336,7 +336,6 @@ connectionAddressFromURI u = fmap addxinfo $
     port def = case uriPort auth of
       ""  -> def
       _   -> read $ tail $ uriPort auth :: Word16
-
 
 --
 -- | Creates a basic SSL context. This is the SSL context used if you make an

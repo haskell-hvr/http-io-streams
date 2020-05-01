@@ -1,3 +1,10 @@
+See also http://pvp.haskell.org/faq
+
+### 0.1.3.0
+
+* New functions `receiveUpgradeResponse`, 'receiveConnectResponse', and `unsafeWithRawStreams` for accessing full-duplex low-level streams (e.g. for upgrading to Websockets protocol
+* New function `makeConnection` for constructing a `Connection` object over custom streams.
+
 ### 0.1.2.0
 
 * New functions `unsafeReceiveResponse` and `unsafeReceiveResponseRaw` that do not automatically skip to end-of-stream

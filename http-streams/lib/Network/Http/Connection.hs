@@ -2,6 +2,7 @@
 -- HTTP client for use with io-streams
 --
 -- Copyright © 2012-2018 Operational Dynamics Consulting, Pty Ltd
+--           © 2020      Herbert Valerio Riedel
 --
 -- The code in this file, and the program it is a part of, is
 -- made available to you by its authors as open source software:
@@ -32,6 +33,9 @@ module Network.Http.Connection (
     unsafeReceiveResponse,
     unsafeReceiveResponseRaw,
     UnexpectedCompression,
+    receiveUpgradeResponse,
+    receiveConnectResponse,
+    unsafeWithRawStreams,
     emptyBody,
     fileBody,
     bytestringBody,
@@ -70,7 +74,7 @@ import Network.Http.ResponseParser
 --
 data Connection
     = Connection {
-        cHost  :: ByteString,
+        cHost  :: !ByteString,
             -- ^ will be used as the Host: header in the HTTP request.
         cClose :: IO (),
             -- ^ called when the connection should be closed.
@@ -86,16 +90,15 @@ instance Show Connection where
              "\n"]
 
 
---
--- | Create a raw Connection object from the given parts. This is
--- primarily of use when teseting, for example:
+-- | Create a raw 'Connection' object from the given parts. This is
+-- primarily of use when testing (or when HTTP is spoken wrapped
+-- inside another transport-layer), for example:
 --
 -- > fakeConnection :: IO Connection
 -- > fakeConnection = do
 -- >     o  <- Streams.nullOutput
 -- >     i  <- Streams.nullInput
--- >     c  <- makeConnection "www.example.com" (return()) o i
--- >     return c
+-- >     return (makeConnection "www.example.com" (return()) o i)
 --
 -- is an idiom we use frequently in testing and benchmarking, usually
 -- replacing the InputStream with something like:
@@ -108,19 +111,18 @@ instance Show Connection where
 -- be compliant with the HTTP protocol; otherwise, parsers will
 -- reject your message.
 --
+-- @since 0.1.3.0
 makeConnection
     :: ByteString
-    -- ^ will be used as the @Host:@ header in the HTTP request.
+    -- ^ will be used as the default @Host:@ header value in HTTP requests unless overridden by 'setHostname'.
     -> IO ()
-    -- ^ an action to be called when the connection is terminated.
-    -> OutputStream ByteString
+    -- ^ an action to be called when the connection is terminated (via e.g. 'closeConnection').
+    -> OutputStream Builder
     -- ^ write end of the HTTP client-server connection.
     -> InputStream ByteString
     -- ^ read end of the HTTP client-server connection.
-    -> IO Connection
-makeConnection h c o1 i = do
-    o2 <- Streams.builderStream o1
-    return $! Connection h c o2 i
+    -> Connection
+makeConnection = Connection
 
 
 --
@@ -522,6 +524,72 @@ unsafeReceiveResponseRaw c handler = do
     handler p i'
   where
     i = cIn c
+
+-- | Provide access to the full-duplex transport level 'InputStream' and 'OutputStream'.
+--
+-- This can be used for implementing e.g. @CONNECT@ method invocations or when the HTTP
+-- connection is upgraded to a different protocol (e.g. Websockets) via the HTTP/1.1 upgrade mechanism
+-- (see  <https://tools.ietf.org/html/rfc7230#section-6.7 RFC 7230 section 6.7>).
+--
+-- See also 'receiveUpgradeResponse' and 'receiveConnectResponse'.
+--
+-- @since 0.1.3.0
+unsafeWithRawStreams :: Connection -> (InputStream ByteString -> OutputStream Builder -> IO a) -> IO a
+unsafeWithRawStreams conn act = act (cIn conn) (cOut conn)
+
+-- | Variant of 'receiveResponse' which expects either a HTTP @HTTP/1.1 101 Switching Protocols@ upgrade response (see  <https://tools.ietf.org/html/rfc7230#section-6.7 RFC 7230 section 6.7>) or falls back to the normal 'receiveResponse' semantics.
+--
+-- Usually, after having upgraded a HTTP connection it is not possible
+-- to go back and resume speaking the HTTP protocol and so typically the
+-- 'Connection' should be closed after having completed interaction
+-- via the upgraded protocol (via e.g. 'withConnection' or
+-- 'closeConnection').
+--
+-- See also 'unsafeWithRawStreams'.
+--
+-- @since 0.1.3.0
+receiveUpgradeResponse :: Connection
+                       -> (Response -> InputStream ByteString                         -> IO a) -- ^ Non-code @101@ response handler
+                       -> (Response -> InputStream ByteString -> OutputStream Builder -> IO a) -- ^ Code @101@ response handler
+                       -> IO a
+receiveUpgradeResponse c handler handler2 = do
+    p <- readResponseHeader i
+    case pStatusCode p of
+      101 -> handler2 p i (cOut c)
+      _ -> do
+        i' <- readResponseBody p i
+        x  <- handler p i'
+        Streams.skipToEof i'
+        return x
+  where
+    i = cIn c
+
+-- | Variant of 'receiveResponse' which expects either a succesful @2xx@ response to a previously sent @CONNECT@-style request (see  <https://tools.ietf.org/html/rfc7231#section-4.3.6 RFC 7231 section 4.3.6>) or falls back to the normal 'receiveResponse' semantics.
+--
+-- Usually, after having established a tunneled HTTP connection it is not possible
+-- to go back and resume speaking the HTTP protocol and so typically the
+-- 'Connection' should be closed after having completed interaction
+-- via the tunnel (by use of e.g. 'withConnection' or 'closeConnection').
+--
+-- See also 'unsafeWithRawStreams'.
+--
+-- @since 0.1.3.0
+receiveConnectResponse :: Connection
+                       -> (Response -> InputStream ByteString                         -> IO a) -- ^ Non-code @2xx@ response handler
+                       -> (Response -> InputStream ByteString -> OutputStream Builder -> IO a) -- ^ Code @2xx@ response handler
+                       -> IO a
+receiveConnectResponse c handler handler2 = do
+    p <- readResponseHeader i
+    case pStatusCode p of
+      code | code >= 200, code < 300 -> handler2 p i (cOut c)
+      _ -> do
+        i' <- readResponseBody p i
+        x  <- handler p i'
+        Streams.skipToEof i'
+        return x
+  where
+    i = cIn c
+
 
 --
 -- | Use this for the common case of the HTTP methods that only send

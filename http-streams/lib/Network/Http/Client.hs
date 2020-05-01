@@ -91,6 +91,7 @@ module Network.Http.Client (
     Hostname,
     Port,
     Connection,
+    makeConnection,
     openConnection,
     openConnectionUnix,
 
@@ -144,6 +145,11 @@ module Network.Http.Client (
     concatHandler,
     concatHandler',
     HttpClientError(..),
+
+    -- * Upgrading/escaping HTTP protocol
+    receiveUpgradeResponse,
+    receiveConnectResponse,
+    unsafeWithRawStreams,
 
     -- * Resource cleanup
     closeConnection,

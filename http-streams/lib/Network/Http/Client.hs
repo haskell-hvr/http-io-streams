@@ -128,6 +128,7 @@ module Network.Http.Client (
     utf8LazyTextBody,
     fileBody,
     inputStreamBody,
+    inputStreamBodyChunked,
     encodedFormBody,
 
     -- * Processing HTTP response

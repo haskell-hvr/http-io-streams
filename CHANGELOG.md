@@ -1,5 +1,9 @@
 See also http://pvp.haskell.org/faq
 
+### 0.1.4.0
+
+* New function 'inputStreamBodyChunked' supporting breaking up over-sized chunks.
+
 ### 0.1.3.0
 
 * New functions `receiveUpgradeResponse`, 'receiveConnectResponse', and `unsafeWithRawStreams` for accessing full-duplex low-level streams (e.g. for upgrading to Websockets protocol

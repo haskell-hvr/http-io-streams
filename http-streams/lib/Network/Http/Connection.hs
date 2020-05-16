@@ -43,6 +43,7 @@ module Network.Http.Connection (
     utf8TextBody,
     utf8LazyTextBody,
     inputStreamBody,
+    inputStreamBodyChunked,
     debugHandler,
     concatHandler
 ) where
@@ -667,6 +668,7 @@ fileBody p o = do
 -- This function maps "Builder.fromByteString" over the input, which will
 -- be efficient if the ByteString chunks are large.
 --
+-- See also 'inputStreamBodyChunked'.
 {-
     Note that this has to be 'supply' and not 'connect' as we do not
     want the end of stream to prematurely terminate the chunked encoding
@@ -677,6 +679,38 @@ inputStreamBody i1 o = do
     i2 <- Streams.map Builder.fromByteString i1
     Streams.supply i2 o
 
+-- | Variant of 'inputStreamBody' which enforces a maximum chunk-size.
+--
+-- This is useful to deal with some HTTP server implementation which
+-- impose maximum chunk-size for @chunked-transfer@ encoded request
+-- bodies.
+--
+-- When called with a negative or @0@ chunk-size argument this
+-- function is equivalent to 'inputStreamBody', i.e. over sized chunks
+-- from the 'InputStream' are not broken up.
+--
+-- @since 0.1.4.0
+inputStreamBodyChunked :: Int -> InputStream ByteString -> OutputStream Builder -> IO ()
+inputStreamBodyChunked maxChunkSize i o
+  | maxChunkSize > 0 = go
+  | otherwise        = inputStreamBody i o
+  where
+    go = do
+      mchunk <- Streams.read i
+      case mchunk of
+        Nothing -> return () -- don't pass on EOF signal
+        Just chunk
+          | chunkLen <= maxChunkSize -> do
+             Streams.write (Just $! Builder.fromByteString chunk) o
+             go
+          | otherwise -> do
+             let (chunk1,rest) | chunkLen < 2*maxChunkSize = S.splitAt (chunkLen `quot` 2) chunk
+                               | otherwise                 = S.splitAt maxChunkSize chunk
+             Streams.unRead rest i
+             Streams.write (Just $! Builder.fromByteString chunk1) o
+             go
+          where
+            chunkLen = S.length chunk
 
 --
 -- | Print the response headers and response body to @stdout@. You can

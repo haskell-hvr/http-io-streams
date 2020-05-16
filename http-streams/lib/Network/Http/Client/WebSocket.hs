@@ -1,7 +1,8 @@
-{-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE NamedFieldPuns    #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE NamedFieldPuns     #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE RecordWildCards    #-}
 
 {-# OPTIONS_GHC -Wall #-}
 -- |
@@ -46,10 +47,14 @@ module Network.Http.Client.WebSocket
     , secWebSocketKeyFromB64
     , secWebSocketKeyToB64
     , secWebSocketKeyFromWords
+
+      -- * Exception
+    , WsException(..)
     ) where
 
 import           Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder
+import           Control.Exception
 import           Control.Monad            (unless, when)
 import qualified Crypto.Hash.SHA1         as SHA1
 import qualified Data.Binary              as Bin
@@ -64,12 +69,23 @@ import qualified Data.CaseInsensitive     as CI
 import           Data.IORef
 import           Data.Maybe               (isJust)
 import           Data.Monoid              (Monoid (..))
+import           Data.Typeable            (Typeable)
 import           Data.Word
 import           Data.XOR                 (xor32LazyByteString, xor32StrictByteString')
 import           Network.Http.Client      as HC
 import qualified Network.Http.Connection  as HC
 import           System.IO.Streams        (InputStream, OutputStream)
 import qualified System.IO.Streams        as Streams
+
+-- | Exception type thrown by WebSocket routines.
+--
+-- These exceptions mostly denote WebSocket protocol violations from either side, client and server.
+--
+-- @since 0.1.4.0
+data WsException = WsException String
+  deriving (Typeable,Show)
+
+instance Exception WsException
 
 -- | WebSocket Frame as per <https://tools.ietf.org/html/rfc6455#section-5.2 RFC 6455 section 5.2>
 --
@@ -139,7 +155,7 @@ readWSFrameHdr (HC.Connection { cIn = is }) = do
     go (Bin.Fail rest _ err) = do
         unless (BS.null rest) $
           Streams.unRead rest is
-        fail ("readWSFrameHdr: " ++ err)
+        throwIO $ WsException ("readWSFrameHdr: " ++ err)
     go partial@(Bin.Partial cont) = do
         mchunk <- Streams.read is
         case mchunk of
@@ -191,8 +207,10 @@ receiveWSFrame (conn@HC.Connection { cIn = is }) cont = do
 -- @since 0.1.4.0
 sendWSFragData :: Connection -> WSFrameHdr -> (OutputStream ByteString -> IO a) -> IO a
 sendWSFragData _ hdr0  _
-  | not (wsIsDataFrame (ws'opcode hdr0)) = fail "sendWSFragData: sending control-frame requested"
-  | ws'opcode hdr0 == WSOpcode'Continuation = fail "sendWSFragData: sending continuation frame requested"
+  | not (wsIsDataFrame (ws'opcode hdr0))
+      = throwIO (WsException "sendWSFragData: sending control-frame requested")
+  | ws'opcode hdr0 == WSOpcode'Continuation
+      = throwIO (WsException "sendWSFragData: sending continuation frame requested")
 sendWSFragData (HC.Connection { cOut = os }) hdr0 cont = do
     opcodeRef <- newIORef (ws'opcode hdr0)
     let go Nothing = return ()
@@ -230,13 +248,13 @@ sendWSFragData (HC.Connection { cOut = os }) hdr0 cont = do
 writeWSFrame :: Connection -> WSOpcode -> Maybe Word32 -> BL.ByteString -> IO ()
 writeWSFrame (HC.Connection { cOut = os }) opcode mmask payload = do
     when (not (wsIsDataFrame opcode) && plen >= 126) $
-      fail "writeWSFrame': over-sized control-frame"
+      throwIO (WsException "writeWSFrame: over-sized control-frame")
 
     let hdr = wsFrameHdrToBuilder (WSFrameHdr True False False False opcode plen mmask)
         dat = case mmask of
-                Nothing   -> Builder.fromLazyByteString payload
-                Just 0    -> Builder.fromLazyByteString payload
-                Just mask -> Builder.fromLazyByteString (xor32LazyByteString mask payload)
+                Nothing  -> Builder.fromLazyByteString payload
+                Just 0   -> Builder.fromLazyByteString payload
+                Just msk -> Builder.fromLazyByteString (xor32LazyByteString msk payload)
     Streams.write (Just $ hdr `mappend` dat `mappend` Builder.flush) os
   where
     plen = fromIntegral (BL.length payload)
@@ -259,7 +277,7 @@ readWSFrame maxSize (conn@HC.Connection { cIn = is }) = do
         | ws'length hdr == 0 ->
             return $ Just (hdr,BS.empty)
         | ws'length hdr >= fromIntegral maxSize ->
-            fail "readWSFrame: frame larger than maxSize"
+            throwIO (WsException "readWSFrame: frame larger than maxSize")
         | otherwise -> do
             dat <- Streams.readExactly (fromIntegral (ws'length hdr)) is
             let dat' = case ws'mask hdr of
@@ -339,7 +357,7 @@ instance Bin.Binary WSFrameHdr where
       o1 <- Bin.getWord8
 
       let len7 = o1 .&. 0x7f
-          mask = o1  >= 0x80
+          msk  = o1  >= 0x80
 
       ws'length <- case len7 of
           127 -> do
@@ -355,7 +373,7 @@ instance Bin.Binary WSFrameHdr where
             return (fromIntegral v)
           _ -> return (fromIntegral len7)
 
-      ws'mask <- if mask
+      ws'mask <- if msk
        then Just `fmap` Bin.getWord32be
        else return Nothing
 
@@ -569,32 +587,35 @@ wsUpgradeConnection :: Connection -- ^ Connection in HTTP/1.1 protocol state (i.
                     -> (Response -> Connection -> IO b) -- ^ success continuation; the 'Connection' has been succesfully upgraded to WebSocket mode and only WebSocket operations shall be performed over this 'Connection'.
                     -> IO b
 wsUpgradeConnection conn resource rqmod wskey failedToUpgrade success = do
-  let rqToWS = HC.buildRequest1 $ do
-        HC.http HC.GET resource
-        HC.setHeader "upgrade" "websocket"
-        HC.setHeader "connection" "Upgrade"
-        HC.setHeader "sec-websocket-version" "13"
-        HC.setHeader "sec-websocket-key" (secWebSocketKeyToB64 wskey)
-        rqmod
+    let rqToWS = HC.buildRequest1 $ do
+          HC.http HC.GET resource
+          HC.setHeader "upgrade" "websocket"
+          HC.setHeader "connection" "Upgrade"
+          HC.setHeader "sec-websocket-version" "13"
+          HC.setHeader "sec-websocket-key" (secWebSocketKeyToB64 wskey)
+          rqmod
 
-  HC.sendRequest conn rqToWS HC.emptyBody
+    HC.sendRequest conn rqToWS HC.emptyBody
 
-  HC.receiveUpgradeResponse conn failedToUpgrade $ \resp _is _os -> do
+    HC.receiveUpgradeResponse conn failedToUpgrade $ \resp _is _os -> do
 
-    case CI.mk <$> HC.getHeader resp "connection" of
-      Nothing        -> fail "missing 'connection' header"
-      Just "upgrade" -> return ()
-      Just _         -> fail "wsUpgradeConnection: 'connection' header has non-'upgrade' value"
+      case CI.mk `fmap` HC.getHeader resp "connection" of
+        Nothing        -> abort "missing 'connection' header"
+        Just "upgrade" -> return ()
+        Just _         -> abort "'connection' header has non-'upgrade' value"
 
-    case CI.mk <$> HC.getHeader resp "upgrade" of
-      Nothing          -> fail "missing 'upgrade' header"
-      Just "websocket" -> return ()
-      Just _           -> fail "wsUpgradeConnection: 'upgrade' header has non-'websocket' value"
+      case CI.mk `fmap` HC.getHeader resp "upgrade" of
+        Nothing          -> abort "missing 'upgrade' header"
+        Just "websocket" -> return ()
+        Just _           -> abort "'upgrade' header has non-'websocket' value"
 
-    case HC.getHeader resp "sec-websocket-accept" of
-      Nothing -> fail "wsUpgradeConnection: missing 'sec-websocket-accept' header"
-      Just wsacc
-        | wsacc /= wsKeyToAcceptB64 wskey -> fail "sec-websocket-accept header mismatch"
-        | otherwise -> return () -- pass
+      case HC.getHeader resp "sec-websocket-accept" of
+        Nothing -> abort "missing 'sec-websocket-accept' header"
+        Just wsacc
+          | wsacc /= wsKeyToAcceptB64 wskey -> abort "sec-websocket-accept header mismatch"
+          | otherwise -> return () -- pass
 
-    success resp conn
+      success resp conn
+  where
+    abort msg = throwIO (WsException ("wsUpgradeConnection: "++msg))
+

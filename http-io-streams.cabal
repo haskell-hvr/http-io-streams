@@ -7,15 +7,9 @@ description:
   An HTTP client with WebSocket (RFC 6455) support, using the Snap Framework's [io-streams](https://hackage.haskell.org/package/io-streams) library to
   handle the streaming IO. The @http-io-streams@ API designed for ease of use when querying web services and dealing with the result as streaming I/O.
   .
-  The library is exported in a single module; see "Network.Http.Client"
-  for full documentation.
+  The main HTTP/1.1 part of the library is exported in a single module "Network.Http.Client"; the WebSocket specific functionality is available from the "Network.Http.Client.WebSocket" module.
   .
-  __NOTE__: This is a fork of [http-streams](http://hackage.haskell.org/package/http-streams)
-  with a lighter dependency footprint which focuses on core HTTP
-  functionality and as a consequence doesn't include out-of-the-box
-  support for handling JSON data. If you need support for handling JSON
-  web-services, you should use the original @http-streams@ package instead of
-  this package.
+  __NOTE__: This package originally started as a fork of [http-streams](http://hackage.haskell.org/package/http-streams) with a lighter dependency footprint focusing on core HTTP functionality.
 
 license:             BSD-3-Clause AND GPL-2.0-or-later
 license-files:       LICENSE LICENSE.GPLv2

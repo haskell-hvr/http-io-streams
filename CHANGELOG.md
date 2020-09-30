@@ -1,5 +1,9 @@
 See also http://pvp.haskell.org/faq
 
+### 0.1.5.0
+
+* New function `openConnectionAddress'` function supporting supplying local `SSLContext`s.
+
 ### 0.1.4.0
 
 * New module `Network.Http.Client.WebSocket` providing basic RFC6455 support.

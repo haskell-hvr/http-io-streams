@@ -35,6 +35,7 @@ module Network.Http.Inconvenience (
     connectionAddressFromURI,
     connectionAddressFromURL,
     openConnectionAddress,
+    openConnectionAddress',
 
         -- for testing
     splitURI
@@ -244,12 +245,24 @@ data ConnectionAddress
 --
 -- This operation is often used in combination with 'withConnection'.
 --
+-- This uses the implicit global 'SSLContext' which can be accessed via 'modifyContextSSL'; see 'openConnectionAddress'' if you need more control in order to supply a local 'SSLContext'.
+--
 -- @since 0.1.1.0
 openConnectionAddress :: ConnectionAddress -> IO Connection
-openConnectionAddress ca = case ca of
+openConnectionAddress = openConnectionAddress' (const $ readIORef global)
+
+-- | Variant of 'openConnectionAddress' allowing to supply local 'SSLContext'
+--
+-- The @IO SSLContext@ action is only evaluated in case of a 'ConnectionAddressHttps' target.
+--
+-- See also 'baselineContextSSL' which may be convenient to use as a starting point; you may want to implement your own variant of 'baselineContextSSL'.
+--
+-- @since 0.1.5.0
+openConnectionAddress' :: ((Hostname,Word16) -> IO SSLContext) -> ConnectionAddress -> IO Connection
+openConnectionAddress' getCtx ca = case ca of
   ConnectionAddressHttp  host port  -> openConnection host port
   ConnectionAddressHttps host ports -> do
-    ctx <- readIORef global
+    ctx <- getCtx (host,ports)
     openConnectionSSL ctx host ports
   ConnectionAddressHttpUnix fp -> do
     c <- openConnectionUnix (S.unpack fp)

@@ -231,8 +231,7 @@ openConnection h1' p = do
 -- Crypto is as provided by the system @openssl@ library, as wrapped
 -- by the @HsOpenSSL@ package and @openssl-streams@.
 --
--- /There is no longer a need to call @withOpenSSL@ explicitly; the
--- initialization is invoked once per process for you/
+-- NB: /There is no longer a need to call 'OpenSSL.withOpenSSL' explicitly; the initialization is invoked once per process for you/
 --
 openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
 openConnectionSSL ctx h1' p = withOpenSSL $ do

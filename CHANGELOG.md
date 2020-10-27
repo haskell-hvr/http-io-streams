@@ -2,6 +2,8 @@ See also http://pvp.haskell.org/faq
 
 ### 0.1.6.0
 
+* New function `voidContextSSL` for creating a _void_ SSL Context which rejects any TLS handshake attempts
+* New function `contextSetCASystemStore` exposing functionality embedded in `baselineContextSSL`
 * New function `openConnectionAddress''` supporting supplying local `SSLContext`s as well as modifying the `SSL` connection before initiating the client SSL handshake.
 * New function `openConnectionSSL'` which allows to customize the 'SSL' connection /before/ a client SSL handshake is attempted.
 * New convenience function `getContextSSL` function allowing to retrieve global `SSLContext`.

@@ -177,6 +177,8 @@ module Network.Http.Client (
     openConnectionSSL,
     openConnectionSSL',
     baselineContextSSL,
+    voidContextSSL,
+    contextSetCASystemStore,
     modifyContextSSL,
     getContextSSL,
     establishConnection,

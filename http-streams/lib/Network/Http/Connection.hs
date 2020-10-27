@@ -22,6 +22,7 @@ module Network.Http.Connection (
     withConnection,
     openConnection,
     openConnectionSSL,
+    openConnectionSSL',
     openConnectionUnix,
     closeConnection,
     getHostname,
@@ -234,7 +235,31 @@ openConnection h1' p = do
 -- NB: /There is no longer a need to call 'OpenSSL.withOpenSSL' explicitly; the initialization is invoked once per process for you/
 --
 openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
-openConnectionSSL ctx h1' p = withOpenSSL $ do
+openConnectionSSL ctx h1' = openConnectionSSL' modssl ctx h1'
+  where
+    modssl ssl = SSL.setTlsextHostName ssl h1
+    h1         = S.unpack h1'
+
+-- | Variant of 'openConnectionSSL' which allows to customize the
+-- 'SSL' connection /before/ a client SSL handshake is
+-- attempted. This is useful if you want to have more control over
+-- the use of TLS extensions such as
+-- <https://en.wikipedia.org/wiki/Server_Name_Indication SNI> or
+-- enable features such as
+-- <https://www.openssl.org/docs/manmaster/man3/X509_check_host.html hostname validation>.
+--
+-- For reference, the 'openConnectionSSL' function can be defined in
+-- terms of 'openConnectionSSL'' like so
+--
+-- > openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
+-- > openConnectionSSL ctx h1' = openConnectionSSL' modssl ctx h1'
+-- >   where
+-- >     modssl ssl = SSL.setTlsextHostName ssl h1
+-- >     h1         = S.unpack h1'
+--
+-- @since 0.1.6.0
+openConnectionSSL' :: (SSL -> IO ()) -> SSLContext -> Hostname -> Port -> IO Connection
+openConnectionSSL' modssl ctx h1' p = withOpenSSL $ do
     is <- getAddrInfo Nothing (Just h1) (Just $ show p)
 
     let a = addrAddress $ head is
@@ -244,7 +269,7 @@ openConnectionSSL ctx h1' p = withOpenSSL $ do
     connect s a
 
     ssl <- SSL.connection ctx s
-    SSL.setTlsextHostName ssl h1
+    modssl ssl
     SSL.connect ssl
 
     (i,o1) <- Streams.sslToStreams ssl

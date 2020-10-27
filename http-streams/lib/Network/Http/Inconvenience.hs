@@ -20,6 +20,7 @@
 module Network.Http.Inconvenience (
     URL,
     modifyContextSSL,
+    getContextSSL,
     establishConnection,
     get,
     post,
@@ -166,13 +167,26 @@ global = unsafePerformIO $ do
 --
 -- | Modify the context being used to configure the SSL tunnel used by
 -- the convenience API functions to make @https://@ connections. The
--- default is that setup by 'baselineContextSSL'.
+-- default is that setup by 'baselineContextSSL'. See also 'getContextSSL'.
 --
+-- __NOTE__: This operation is /not/ reentrant; it is assumed this
+-- operation is called once during program initialization and thus
+-- there is currently no provision implemented to protected against
+-- parallel execution from multiple threads!
 modifyContextSSL :: (SSLContext -> IO SSLContext) -> IO ()
 modifyContextSSL f = do
     ctx <- readIORef global
     ctx' <- f ctx
     writeIORef global ctx'
+
+--
+-- | Retrieve the /global/ context being used to configure the SSL
+-- connection used by the convenience API functions to make @https://@
+-- connections. See also 'modifyContextSSL'.
+--
+-- @since 0.1.6.0
+getContextSSL :: IO SSLContext
+getContextSSL = readIORef global
 
 --
 -- | Given a URL, work out whether it is normal, secure, or unix domain,

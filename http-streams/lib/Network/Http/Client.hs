@@ -177,6 +177,7 @@ module Network.Http.Client (
     openConnectionSSL,
     baselineContextSSL,
     modifyContextSSL,
+    getContextSSL,
     establishConnection,
 
     -- * Alternative 'ConnectionAddress' API

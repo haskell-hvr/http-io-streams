@@ -187,6 +187,7 @@ module Network.Http.Client (
     connectionAddressFromURL,
     openConnectionAddress,
     openConnectionAddress',
+    openConnectionAddress'',
 
     -- -- * Testing support
     -- makeConnection,

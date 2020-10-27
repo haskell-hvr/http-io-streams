@@ -37,6 +37,7 @@ module Network.Http.Inconvenience (
     connectionAddressFromURL,
     openConnectionAddress,
     openConnectionAddress',
+    openConnectionAddress'',
 
         -- for testing
     splitURI
@@ -278,6 +279,23 @@ openConnectionAddress' getCtx ca = case ca of
   ConnectionAddressHttps host ports -> do
     ctx <- getCtx (host,ports)
     openConnectionSSL ctx host ports
+  ConnectionAddressHttpUnix fp -> do
+    c <- openConnectionUnix (S.unpack fp)
+    return c { cHost = mempty } -- NB: HTTP RFC allows empty Host: headers
+
+-- | Yet another variant of 'openConnectionAddress' allowing to supply local 'SSLContext' as well as an 'SSL.SSL' connection modifier (see 'openConnectionSSL'' for details).
+--
+-- The @IO (SSLContext@ action is only evaluated in case of a 'ConnectionAddressHttps' target.
+--
+-- See also 'baselineContextSSL' which may be convenient to use as a starting point; you may want to implement your own variant of 'baselineContextSSL'.
+--
+-- @since 0.1.6.0
+openConnectionAddress'' :: ((Hostname,Word16) -> IO (SSLContext, SSL.SSL -> IO ())) -> ConnectionAddress -> IO Connection
+openConnectionAddress'' getCtx ca = case ca of
+  ConnectionAddressHttp  host port  -> openConnection host port
+  ConnectionAddressHttps host ports -> do
+    (ctx,modssl) <- getCtx (host,ports)
+    openConnectionSSL' modssl ctx host ports
   ConnectionAddressHttpUnix fp -> do
     c <- openConnectionUnix (S.unpack fp)
     return c { cHost = mempty } -- NB: HTTP RFC allows empty Host: headers

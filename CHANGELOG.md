@@ -1,5 +1,9 @@
 See also http://pvp.haskell.org/faq
 
+### 0.1.6.1
+
+* Build with GHC 9.2 and `ghc-prim-0.8` (via `base-4.16`).
+
 ### 0.1.6.0
 
 * New function `openConnectionAddress''` supporting supplying local `SSLContext`s as well as modifying the `SSL` connection before initiating the client SSL handshake.
@@ -13,7 +17,7 @@ See also http://pvp.haskell.org/faq
 ### 0.1.4.0
 
 * New module `Network.Http.Client.WebSocket` providing basic RFC6455 support.
-* New function 'inputStreamBodyChunked' supporting breaking up over-sized chunks.
+* New function `inputStreamBodyChunked` supporting breaking up over-sized chunks.
 
 ### 0.1.3.0
 

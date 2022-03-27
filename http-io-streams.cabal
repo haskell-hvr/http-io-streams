@@ -1,7 +1,6 @@
 cabal-version:       2.2
 name:                http-io-streams
-version:             0.1.6.0
-x-revision:          3
+version:             0.1.6.1
 
 synopsis:            HTTP and WebSocket client based on io-streams
 description:
@@ -23,6 +22,7 @@ bug-reports:         https://github.com/hvr/http-io-streams/issues
 extra-source-files:  CHANGELOG.md
 
 tested-with:
+  GHC == 9.2.2
   GHC == 9.0.2
   GHC == 8.10.7
   GHC == 8.8.4
@@ -51,13 +51,24 @@ flag fast-xor
 
 common settings
   build-depends:
-    , base                 >= 4.5 && < 4.16
+    , base                 >= 4.5 && < 4.17
     , blaze-builder       ^>= 0.4.1.0
-    , bytestring          ^>= 0.10.0.0
+    , bytestring           >= 0.10.0.0 && < 0.12
     , case-insensitive    ^>= 1.2.0.11
     , containers          ^>= 0.5.0.0 || ^>= 0.6.0.1
 
   default-language:  Haskell2010
+  other-extensions:
+    BangPatterns
+    CPP
+    DeriveDataTypeable
+    DoAndIfThenElse
+    MagicHash
+    NamedFieldPuns
+    OverloadedStrings
+    Rank2Types
+    RecordWildCards
+    UnboxedTuples
 
   ghc-options:
     -Wall
@@ -106,9 +117,7 @@ library
 
   -- http-common
   build-depends:
-    , base64-bytestring   ^>= 1.1.0.0 || ^>= 1.2.1.0
-        -- r3: undo revision of the lower bound of base64-bytestring in r1;
-        -- a bump to just ^>= 1.2.1.0 should wait for a re-release.
+    , base64-bytestring   ^>= 1.2.1.0
     , mtl                 ^>= 2.2.2
 
   hs-source-dirs: http-common/lib

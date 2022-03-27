@@ -62,7 +62,10 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Data.Typeable (Typeable)
 import Data.Word (Word16)
-import GHC.Exts (Int(..),word2Int#, uncheckedShiftRL#)
+import GHC.Exts (Int(..), word2Int#, uncheckedShiftRL#)
+#if MIN_VERSION_base(4,16,0)
+import GHC.Exts (word8ToWord#)
+#endif
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), isAbsoluteURI,
                     parseRelativeReference, parseURI, uriToString)
@@ -135,9 +138,11 @@ hexd c0 = Builder.fromWord8 (c2w '%') `mappend` Builder.fromWord8 hi
     toDigit   = c2w . intToDigit
     !low      = toDigit $ fromEnum $ c .&. 0xf
     !hi       = toDigit $ (c .&. 0xf0) `shiftr` 4
-
+#if MIN_VERSION_base(4,16,0)
+    shiftr (W8# a#) (I# b#) = I# (word2Int# (uncheckedShiftRL# (word8ToWord# a#) b#))
+#else
     shiftr (W8# a#) (I# b#) = I# (word2Int# (uncheckedShiftRL# a# b#))
-
+#endif
 
 urlEncodeTable :: Set Char
 urlEncodeTable = Set.fromList $! filter f $! map w2c [0..255]

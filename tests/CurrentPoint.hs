@@ -56,6 +56,5 @@ fakeConnection x' = do
     o <- Streams.nullOutput
     i <- Streams.fromByteString x'
 
-    c <- makeConnection "swift.example.com" (return ()) o i
+    let c = makeConnection "swift.example.com" (return ()) o i
     return c
-

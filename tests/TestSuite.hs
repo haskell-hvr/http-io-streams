@@ -110,8 +110,9 @@ suite = do
         testExcessiveRedirects
         testGeneralHandler
         testEstablishConnection
-        testParsingJson1
-        testParsingJson2
+        -- Andreas Abel, 2022-03-30: These test do not build:
+        -- testParsingJson1
+        -- testParsingJson2
 
     describe "Corner cases in protocol compliance" $ do
         testSendBodyFor PUT
@@ -165,7 +166,7 @@ fakeConnection :: IO Connection
 fakeConnection = do
     i <- Streams.nullInput
     o <- Streams.nullOutput
-    c <- makeConnection "www.example.com" (return ()) o i
+    let c = makeConnection "www.example.com" (return ()) o i
     return c
 
 
@@ -336,7 +337,7 @@ fakeConnectionHttp10 = do
     i <- Streams.fromByteString x'
 
     o <- Streams.nullOutput
-    c <- makeConnection "bad.example.com" (return ()) o i
+    let c = makeConnection "bad.example.com" (return ()) o i
     return c
 
 
@@ -382,7 +383,7 @@ fakeConnectionNoContent = do
     i3 <- Streams.concatInputStreams [i1, i2]
 
     o <- Streams.nullOutput
-    c <- makeConnection "worse.example.com" (return ()) o i3
+    let c = makeConnection "worse.example.com" (return ()) o i3
     return (c, mv)
   where
     blockOn :: MVar () -> IO (Maybe ByteString)
@@ -673,27 +674,29 @@ testEstablishConnection =
         let len = S.length x'
         assertEqual "Incorrect number of bytes read" 4611 len
 
+-- Andreas Abel, 2022-03-30:
+-- No 'jsonHandler' defined, unfortunately, so no testing it.
 
-testParsingJson1 =
-    it "GET with JSON handler behaves" $ do
-        let url = S.concat ["http://", localhost, "/static/data-eu-gdp.json"]
+-- testParsingJson1 =
+--     it "GET with JSON handler behaves" $ do
+--         let url = S.concat ["http://", localhost, "/static/data-eu-gdp.json"]
 
-        x <- get url jsonHandler
-        let (Object o) = x
-        let (Just v) = Map.lookup "label" o
-        let (String t) = v
+--         x <- get url jsonHandler
+--         let (Object o) = x
+--         let (Just v) = Map.lookup "label" o
+--         let (String t) = v
 
-        assertEqual "Incorrect response" "Europe (EU27)" t
+--         assertEqual "Incorrect response" "Europe (EU27)" t
 
-testParsingJson2 =
-    it "GET with JSON handler parses using Aeson" $ do
-        let url = S.concat ["http://", localhost, "/static/data-jp-gdp.json"]
+-- testParsingJson2 =
+--     it "GET with JSON handler parses using Aeson" $ do
+--         let url = S.concat ["http://", localhost, "/static/data-jp-gdp.json"]
 
-        x <- get url jsonHandler :: IO GrossDomesticProduct
+--         x <- get url jsonHandler :: IO GrossDomesticProduct
 
-        assertEqual "Incorrect response" "Japan" (gLabel x)
-        assertEqual "Data not parsed as expected" 2008 (fst $ last $ gData x)
---      L.putStr $ encodePretty x
+--         assertEqual "Incorrect response" "Japan" (gLabel x)
+--         assertEqual "Data not parsed as expected" 2008 (fst $ last $ gData x)
+-- --      L.putStr $ encodePretty x
 
 
 {-
@@ -718,4 +721,3 @@ instance ToJSON GrossDomesticProduct where
     toJSON (GrossDomesticProduct l d) = object
                                ["label" .= l,
                                 "data"  .= d]
-

@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                http-io-streams
-version:             0.1.6.1
+version:             0.1.6.2
 
 synopsis:            HTTP and WebSocket client based on io-streams
 description:
@@ -15,10 +15,10 @@ license:             BSD-3-Clause AND GPL-2.0-or-later
 license-files:       LICENSE LICENSE.GPLv2
 author:              Andrew Cowie <andrew@operationaldynamics.com>,
                      Herbert Valerio Riedel <hvr@gnu.org>
-maintainer:          Herbert Valerio Riedel <hvr@gnu.org>
+maintainer:          https://github.com/haskell-hvr/http-io-streams
 copyright:           © 2012-2018 Operational Dynamics Consulting, Pty Ltd and Others
 category:            Web, IO-Streams
-bug-reports:         https://github.com/hvr/http-io-streams/issues
+bug-reports:         https://github.com/haskell-hvr/http-io-streams/issues
 
 extra-source-files:
   CHANGELOG.md
@@ -47,7 +47,7 @@ tested-with:
 
 source-repository    head
   type:              git
-  location:          https://github.com/hvr/http-io-streams.git
+  location:          https://github.com/haskell-hvr/http-io-streams.git
 
 flag brotli
   manual:  True

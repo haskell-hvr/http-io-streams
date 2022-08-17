@@ -1,5 +1,7 @@
 apt: libbrotli-dev
 
+branches: master ci*
+
 installed: -all
 
 -- Andreas Abel, 2022-03-30:

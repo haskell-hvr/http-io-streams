@@ -7,4 +7,4 @@ installed: -all
 -- Andreas Abel, 2022-03-30:
 -- The `snap` framework does not build on GHC 9.x yet.
 -- On GHC 7.4, it has conflicting constraints with the other dependencies.
-tests: >= 7.6 && < 9.0
+tests: >= 7.6

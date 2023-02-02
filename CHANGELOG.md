@@ -1,6 +1,6 @@
 See also http://pvp.haskell.org/faq
 
-#### 0.1.6.2
+### Unreleased
 
 * Run test-suite via `cabal test`.
 

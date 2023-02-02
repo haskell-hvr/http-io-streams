@@ -1,11 +1,14 @@
 See also http://pvp.haskell.org/faq
 
-### 0.1.6.2
+#### 0.1.6.2
 
-* Allow `text-2.0` (no code change).
 * Run test-suite via `cabal test`.
 
-### 0.1.6.1
+#### 0.1.6.1 revision 1
+
+* Allow `text-2.0` (no code change).
+
+#### 0.1.6.1
 
 * Build with GHC 9.2 and `ghc-prim-0.8` (via `base-4.16`).
 

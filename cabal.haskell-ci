@@ -6,11 +6,15 @@ installed: -all
 
 -- Andreas Abel, 2022-03-30:
 -- On GHC 7.4, the `snap` framework it has conflicting constraints with the other dependencies.
--- Andreas Abel, 2023-02-02:
+-- 2023-02-02:
 -- Weird compilation error for `snap` under GHC 7.6.
-tests: >= 7.8
+-- 2023-02-03:
+-- `snap` does not build with GHC 9.6 yet.
+tests: >= 7.8 && < 9.5
 
 constraint-set mtl-2.3
-  ghc: >= 8.6
+  -- GHC 9.0 is excluded by mtl-2.3.1: https://github.com/haskell/mtl/issues/138
+  ghc: >= 8.6 && < 9 || >= 9.2.3
   constraints: mtl >= 2.3.1
-  tests: False
+  -- Tests are anyway disabled in "constraint-set" jobs.
+  -- tests: False

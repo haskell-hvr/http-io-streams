@@ -1,6 +1,6 @@
 See also http://pvp.haskell.org/faq
 
-### 0.1.6.2
+#### 0.1.6.2
 
 * Allow `mtl-2.3` (no code change).
 * Run test-suite via `cabal test`.

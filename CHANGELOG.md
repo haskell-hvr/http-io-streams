@@ -1,8 +1,11 @@
 See also http://pvp.haskell.org/faq
 
-### Unreleased
+#### 0.1.6.2
 
+* Allow `mtl-2.3` (no code change).
 * Run test-suite via `cabal test`.
+
+Tested with GHC 7.4 - 9.6.
 
 #### 0.1.6.1 revision 1
 

@@ -6,6 +6,13 @@ branches: master ci*
 -- For GHC 7.6 and 7.4 need newer: unix process directory
 installed: +all -mtl -transformers -unix -process -directory
 
+-- We would also need newer bytestring, but loosening the constraint here
+-- breaks the build of xor as a too new bytestring is picked up then,
+-- thanks to the global allow-newer below.
+-- https://github.com/haskell-CI/haskell-ci/issues/670
+-- For now, we shut off GHC 7.6 an 7.4
+enabled: >= 7.8
+
 -- Andreas Abel, 2022-03-30:
 -- On GHC 7.4, the `snap` framework it has conflicting constraints with the other dependencies.
 -- 2023-02-02:

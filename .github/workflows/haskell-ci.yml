@@ -94,16 +94,6 @@ jobs:
             compilerVersion: 7.8.4
             setup-method: hvr-ppa
             allow-failure: false
-          - compiler: ghc-7.6.3
-            compilerKind: ghc
-            compilerVersion: 7.6.3
-            setup-method: hvr-ppa
-            allow-failure: false
-          - compiler: ghc-7.4.2
-            compilerKind: ghc
-            compilerVersion: 7.4.2
-            setup-method: hvr-ppa
-            allow-failure: false
       fail-fast: false
     steps:
       - name: apt
@@ -154,7 +144,7 @@ jobs:
 
           HCNUMVER=$(${HC} --numeric-version|perl -ne '/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?$/; print(10000 * $1 + 100 * $2 + ($3 == 0 ? $5 != 1 : $3))')
           echo "HCNUMVER=$HCNUMVER" >> "$GITHUB_ENV"
-          if [ $((HCNUMVER >= 70800 && HCNUMVER < 90600)) -ne 0 ] ; then echo "ARG_TESTS=--enable-tests" >> "$GITHUB_ENV" ; else echo "ARG_TESTS=--disable-tests" >> "$GITHUB_ENV" ; fi
+          if [ $((HCNUMVER < 90600)) -ne 0 ] ; then echo "ARG_TESTS=--enable-tests" >> "$GITHUB_ENV" ; else echo "ARG_TESTS=--disable-tests" >> "$GITHUB_ENV" ; fi
           echo "ARG_BENCH=--enable-benchmarks" >> "$GITHUB_ENV"
           echo "HEADHACKAGE=false" >> "$GITHUB_ENV"
           echo "ARG_COMPILER=--$HCKIND --with-compiler=$HC" >> "$GITHUB_ENV"
@@ -262,7 +252,7 @@ jobs:
           $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --write-ghc-environment-files=always
       - name: tests
         run: |
-          if [ $((HCNUMVER >= 70800 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --test-show-details=direct ; fi
+          if [ $((HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --test-show-details=direct ; fi
       - name: cabal check
         run: |
           cd ${PKGDIR_http_io_streams} || false

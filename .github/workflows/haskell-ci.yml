@@ -235,6 +235,7 @@ jobs:
           if [ $((HCNUMVER >= 80200)) -ne 0 ] ; then echo "package http-io-streams" >> cabal.project ; fi
           if [ $((HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           cat >> cabal.project <<EOF
+          allow-newer: bytestring
           EOF
           cat cabal.project
           cat cabal.project.local
@@ -275,10 +276,15 @@ jobs:
       - name: prepare for constraint sets
         run: |
           rm -f cabal.project.local
-      - name: constraint set mtl-2.3
+      - name: constraint set bytestring-0.12
         run: |
-          if [ $((HCNUMVER >= 80600 && HCNUMVER < 90000 || HCNUMVER >= 90200)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='mtl >= 2.3.1' --dependencies-only -j2 all ; fi
-          if [ $((HCNUMVER >= 80600 && HCNUMVER < 90000 || HCNUMVER >= 90200)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='mtl >= 2.3.1' all ; fi
+          if [ $((HCNUMVER >= 80200 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' --dependencies-only -j2 all ; fi
+          if [ $((HCNUMVER >= 80200 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' all ; fi
+          if [ $((HCNUMVER >= 80200 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' all ; fi
+      - name: constraint set bytestring-0.12-no-tests
+        run: |
+          if [ $((HCNUMVER >= 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' --dependencies-only -j2 all ; fi
+          if [ $((HCNUMVER >= 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' all ; fi
       - name: save cache
         uses: actions/cache/save@v3
         if: always()

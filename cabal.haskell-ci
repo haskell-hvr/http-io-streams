@@ -12,9 +12,22 @@ installed: -all
 -- `snap` does not build with GHC 9.6 yet.
 tests: >= 7.8 && < 9.5
 
-constraint-set mtl-2.3
-  -- GHC 9.0 is excluded by mtl-2.3.1: https://github.com/haskell/mtl/issues/138
-  ghc: >= 8.6 && < 9 || >= 9.2.3
-  constraints: mtl >= 2.3.1
-  -- Tests are anyway disabled in "constraint-set" jobs.
-  -- tests: False
+-- constraint-set mtl-2.3
+--   -- GHC 9.0 is excluded by mtl-2.3.1: https://github.com/haskell/mtl/issues/138
+--   ghc: >= 8.6 && < 9 || >= 9.2.3
+--   constraints: mtl >= 2.3.1
+--   tests: False
+--   run-tests: False
+
+constraint-set bytestring-0.12-no-tests
+  ghc: >= 9.6
+  constraints: bytestring ^>= 0.12.0.0
+  tests: False
+  run-tests: False
+constraint-set bytestring-0.12
+  ghc: >= 8.2 && < 9.5
+  constraints: bytestring ^>= 0.12.0.0
+  tests: True
+  run-tests: True
+raw-project
+  allow-newer: bytestring

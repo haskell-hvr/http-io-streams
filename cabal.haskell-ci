@@ -2,7 +2,9 @@ apt: libbrotli-dev
 
 branches: master ci*
 
-installed: -all
+-- http-io-stream wants mtl >= 2.2, but GHC 7.8 has mtl-2.1.
+-- For GHC 7.6 and 7.4 need newer: unix process directory
+installed: +all -mtl -transformers -unix -process -directory
 
 -- Andreas Abel, 2022-03-30:
 -- On GHC 7.4, the `snap` framework it has conflicting constraints with the other dependencies.

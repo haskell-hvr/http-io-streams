@@ -237,6 +237,7 @@ jobs:
           cat >> cabal.project <<EOF
           allow-newer: bytestring
           EOF
+          $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: $_ installed\n" unless /^(directory|http-io-streams|mtl|process|transformers|unix)$/; }' >> cabal.project.local
           cat cabal.project
           cat cabal.project.local
       - name: dump install plan

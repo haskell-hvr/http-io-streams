@@ -144,7 +144,7 @@ jobs:
 
           HCNUMVER=$(${HC} --numeric-version|perl -ne '/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?$/; print(10000 * $1 + 100 * $2 + ($3 == 0 ? $5 != 1 : $3))')
           echo "HCNUMVER=$HCNUMVER" >> "$GITHUB_ENV"
-          if [ $((HCNUMVER < 90600)) -ne 0 ] ; then echo "ARG_TESTS=--enable-tests" >> "$GITHUB_ENV" ; else echo "ARG_TESTS=--disable-tests" >> "$GITHUB_ENV" ; fi
+          echo "ARG_TESTS=--enable-tests" >> "$GITHUB_ENV"
           echo "ARG_BENCH=--enable-benchmarks" >> "$GITHUB_ENV"
           echo "HEADHACKAGE=false" >> "$GITHUB_ENV"
           echo "ARG_COMPILER=--$HCKIND --with-compiler=$HC" >> "$GITHUB_ENV"
@@ -227,7 +227,7 @@ jobs:
           cat >> cabal.project <<EOF
           allow-newer: bytestring
           EOF
-          $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: $_ installed\n" unless /^(directory|http-io-streams|mtl|process|transformers|unix)$/; }' >> cabal.project.local
+          $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: $_ installed\n" unless /^(http-io-streams|mtl|transformers)$/; }' >> cabal.project.local
           cat cabal.project
           cat cabal.project.local
       - name: dump install plan
@@ -252,7 +252,7 @@ jobs:
           $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --write-ghc-environment-files=always
       - name: tests
         run: |
-          if [ $((HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --test-show-details=direct ; fi
+          $CABAL v2-test $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --test-show-details=direct
       - name: cabal check
         run: |
           cd ${PKGDIR_http_io_streams} || false
@@ -269,13 +269,9 @@ jobs:
           rm -f cabal.project.local
       - name: constraint set bytestring-0.12
         run: |
-          if [ $((HCNUMVER >= 80200 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' --dependencies-only -j2 all ; fi
-          if [ $((HCNUMVER >= 80200 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' all ; fi
-          if [ $((HCNUMVER >= 80200 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' all ; fi
-      - name: constraint set bytestring-0.12-no-tests
-        run: |
-          if [ $((HCNUMVER >= 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' --dependencies-only -j2 all ; fi
-          if [ $((HCNUMVER >= 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' all ; fi
+          if [ $((HCNUMVER >= 80200)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' --dependencies-only -j2 all ; fi
+          if [ $((HCNUMVER >= 80200)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' all ; fi
+          if [ $((HCNUMVER >= 80200)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='bytestring ^>= 0.12.0.0' all ; fi
       - name: save cache
         uses: actions/cache/save@v3
         if: always()

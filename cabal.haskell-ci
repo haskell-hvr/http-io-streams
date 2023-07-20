@@ -4,7 +4,8 @@ branches: master ci*
 
 -- http-io-stream wants mtl >= 2.2, but GHC 7.8 has mtl-2.1.
 -- For GHC 7.6 and 7.4 need newer: unix process directory
-installed: +all -mtl -transformers -unix -process -directory
+installed: +all -mtl -transformers
+-- -unix -process -directory
 
 -- We would also need newer bytestring, but loosening the constraint here
 -- breaks the build of xor as a too new bytestring is picked up then,
@@ -17,9 +18,7 @@ enabled: >= 7.8
 -- On GHC 7.4, the `snap` framework it has conflicting constraints with the other dependencies.
 -- 2023-02-02:
 -- Weird compilation error for `snap` under GHC 7.6.
--- 2023-02-03:
--- `snap` does not build with GHC 9.6 yet.
-tests: >= 7.8 && < 9.5
+tests: >= 7.8
 
 -- constraint-set mtl-2.3
 --   -- GHC 9.0 is excluded by mtl-2.3.1: https://github.com/haskell/mtl/issues/138
@@ -28,13 +27,8 @@ tests: >= 7.8 && < 9.5
 --   tests: False
 --   run-tests: False
 
-constraint-set bytestring-0.12-no-tests
-  ghc: >= 9.6
-  constraints: bytestring ^>= 0.12.0.0
-  tests: False
-  run-tests: False
 constraint-set bytestring-0.12
-  ghc: >= 8.2 && < 9.5
+  ghc: >= 8.2
   constraints: bytestring ^>= 0.12.0.0
   tests: True
   run-tests: True

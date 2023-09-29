@@ -1,36 +1,20 @@
 apt: libbrotli-dev
 
-branches: master ci*
+branches: master
 
--- http-io-stream wants mtl >= 2.2, but GHC 7.8 has mtl-2.1.
--- For GHC 7.6 and 7.4 need newer: unix process directory
-installed: +all -mtl -transformers
--- -unix -process -directory
+-- installed: +all -mtl -transformers
+installed: +all
 
--- We would also need newer bytestring, but loosening the constraint here
--- breaks the build of xor as a too new bytestring is picked up then,
--- thanks to the global allow-newer below.
--- https://github.com/haskell-CI/haskell-ci/issues/670
--- For now, we shut off GHC 7.6 an 7.4
-enabled: >= 7.8
-
--- Andreas Abel, 2022-03-30:
--- On GHC 7.4, the `snap` framework it has conflicting constraints with the other dependencies.
--- 2023-02-02:
--- Weird compilation error for `snap` under GHC 7.6.
-tests: >= 7.8
-
--- constraint-set mtl-2.3
---   -- GHC 9.0 is excluded by mtl-2.3.1: https://github.com/haskell/mtl/issues/138
---   ghc: >= 8.6 && < 9 || >= 9.2.3
---   constraints: mtl >= 2.3.1
---   tests: False
---   run-tests: False
-
-constraint-set bytestring-0.12
-  ghc: >= 8.2
-  constraints: bytestring ^>= 0.12.0.0
+-- Test core libraries in versions newer than shipped with GHC
+constraint-set latest-core-libs-Sep-2023
+  constraints: bytestring >= 0.12
+  constraints: containers >= 0.7
+  constraints: text       >= 2.1
+  ghc: >=8.2 && < 9.7
   tests: True
   run-tests: True
+
 raw-project
   allow-newer: bytestring
+  allow-newer: containers
+  allow-newer: text

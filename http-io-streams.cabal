@@ -1,7 +1,6 @@
 cabal-version:       2.2
 name:                http-io-streams
-version:             0.1.6.2
-x-revision:          2
+version:             0.1.6.3
 
 synopsis:            HTTP and WebSocket client based on io-streams
 description:
@@ -32,7 +31,7 @@ extra-source-files:
   tests/statler.jpg
 
 tested-with:
-  GHC == 9.8.0
+  GHC == 9.8.1
   GHC == 9.6.3
   GHC == 9.4.7
   GHC == 9.2.8
@@ -43,7 +42,7 @@ tested-with:
   GHC == 8.4.4
   GHC == 8.2.2
   GHC == 8.0.2
-  GHC == 7.10.3
+  -- GHC == 7.10.3
 
 source-repository    head
   type:              git
@@ -159,6 +158,7 @@ test-suite test
   build-depends:
       -- http-io-streams
     , aeson
+    , attoparsec-aeson
     , aeson-pretty
     , hspec
     , hspec-expectations

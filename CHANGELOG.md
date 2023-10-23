@@ -1,5 +1,11 @@
 See also http://pvp.haskell.org/faq
 
+#### 0.1.6.3
+
+* Test-suite: add dependency `attoparsec-aeson` for `aeson-2.2`.
+
+Tested with GHC 8.0 - 9.8.
+
 #### 0.1.6.2
 
 * Allow `mtl-2.3` (no code change).

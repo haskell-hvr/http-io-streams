@@ -23,8 +23,8 @@ import Control.Applicative
 import Control.Concurrent (MVar, newEmptyMVar, putMVar, takeMVar)
 import Control.Exception (Exception, bracket, handleJust)
 import Control.Monad (forM_, guard)
-import Data.Aeson (FromJSON, ToJSON, Value (..), json, object, parseJSON,
-                   toJSON, (.:), (.=))
+import Data.Aeson (FromJSON, ToJSON, Value (..) , object, parseJSON, toJSON, (.:), (.=))
+import Data.Aeson.Parser (json)
 import Data.Aeson.Encode.Pretty
 import Data.Bits
 import qualified Data.HashMap.Strict as Map

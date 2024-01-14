@@ -168,5 +168,5 @@ test-suite test
     , snap-core
     , snap-server
     , system-filepath
-    , system-fileio
+    , directory
     , unordered-containers

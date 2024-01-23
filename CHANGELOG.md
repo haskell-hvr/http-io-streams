@@ -1,5 +1,11 @@
 See also http://pvp.haskell.org/faq
 
+#### 0.1.6.4
+
+* Depend on `directory` rather than `system-fileio` ([PR #18](https://github.com/haskell-hvr/http-io-streams/pull/18)).
+
+Tested with GHC 8.0 - 9.8.
+
 #### 0.1.6.3
 
 * Test-suite: add dependency `attoparsec-aeson` for `aeson-2.2`.

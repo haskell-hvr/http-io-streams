@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                http-io-streams
-version:             0.1.6.3
+version:             0.1.6.4
 
 synopsis:            HTTP and WebSocket client based on io-streams
 description:

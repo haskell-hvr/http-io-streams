@@ -1,5 +1,12 @@
 See also http://pvp.haskell.org/faq
 
+### 0.1.7.0
+
+* New function `voidContextSSL` for creating a _void_ SSL Context which rejects any TLS handshake attempts
+* New function `contextSetCASystemStore` exposing functionality embedded in `baselineContextSSL`
+
+NB: These functions were originally introduced in the retroactively deprecated 0.1.6.0 release but due to an oversight were dropped again in 0.1.6.1 inadvertently. This minor release reintroduces them in a PVP-compliant way.
+
 #### 0.1.6.4
 
 * Depend on `directory` rather than `system-fileio` ([PR #18](https://github.com/haskell-hvr/http-io-streams/pull/18)).
@@ -26,9 +33,12 @@ Tested with GHC 7.4 - 9.6.
 #### 0.1.6.1
 
 * Build with GHC 9.2 and `ghc-prim-0.8` (via `base-4.16`).
+* Accidentally removed function `voidContextSSL` and `contextSetCASystemStore` introduced in 0.1.6.0
 
-### 0.1.6.0
+### 0.1.6.0 **deprecated**
 
+* New function `voidContextSSL` for creating a _void_ SSL Context which rejects any TLS handshake attempts
+* New function `contextSetCASystemStore` exposing functionality embedded in `baselineContextSSL`
 * New function `openConnectionAddress''` supporting supplying local `SSLContext`s as well as modifying the `SSL` connection before initiating the client SSL handshake.
 * New function `openConnectionSSL'` which allows to customize the SSL connection _before_ a client SSL handshake is attempted.
 * New convenience function `getContextSSL` function allowing to retrieve global `SSLContext`.

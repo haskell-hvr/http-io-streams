@@ -28,6 +28,8 @@ module Network.Http.Inconvenience (
     encodedFormBody,
     put,
     baselineContextSSL,
+    voidContextSSL,
+    contextSetCASystemStore,
     concatHandler',
     TooManyRedirects(..),
     HttpClientError(..),
@@ -402,6 +404,7 @@ connectionAddressFromURI u = fmap addxinfo $
 -- you are encouraged to install the system
 -- certificates somewhere and create your own 'SSLContext'.
 --
+-- See also 'contextSetCASystemStore'
 {-
     We would like to turn certificate verification on for everyone, but
     this has proved contingent on leveraging platform specific mechanisms
@@ -412,26 +415,66 @@ baselineContextSSL :: IO SSLContext
 baselineContextSSL = withOpenSSL $ do
     ctx <- SSL.context
     SSL.contextSetDefaultCiphers ctx
+
+    caSet <- contextSetCASystemStore ctx
+    if caSet
+      then SSL.contextSetVerificationMode ctx (SSL.VerifyPeer True True Nothing)
+      else SSL.contextSetVerificationMode ctx SSL.VerifyNone
+
+    return ctx
+
+-- | Construct a /void/ 'SSL.Context' in a configuration which uses
+-- the @HIGH@ cipher-suite and rejects /any/ presented server
+-- certificate.
+--
+-- This is mostly useful for testing purposes or intentionally
+-- thwarting any attempt to connect to @https://@ uris.
+--
+-- @since 0.1.6.0
+voidContextSSL :: IO SSLContext
+voidContextSSL = do
+    ctx <- SSL.context
+    SSL.contextSetCiphers ctx "HIGH"
+    SSL.contextSetVerificationMode ctx (SSL.VerifyPeer True True (Just (\_ _ -> return False)))
+    return ctx
+
+-- | Configure system-wide certificate store based on OS-specific heuristics.
+--
+-- This function returns 'True' if the 'SSLContext' was configured; or
+-- 'False' if the location couldn't be termined for the current OS.
+--
+-- This function is used by 'baselineContextSSL' but in contrast does
+-- *not* invoke 'SSL.contextSetDefaultCiphers' nor
+-- 'SSL.contextSetVerificationMode'. See source-code for details on
+-- the heuristic used to determine the location of the system
+-- certificate store.
+--
+-- @since 0.1.6.0
+contextSetCASystemStore :: SSLContext -> IO Bool
+contextSetCASystemStore ctx = do
 #if defined(darwin_HOST_OS)
-    SSL.contextSetVerificationMode ctx SSL.VerifyNone
+    return False
 #elif defined(mingw32_HOST_OS)
-    SSL.contextSetVerificationMode ctx SSL.VerifyNone
+    return False
 #elif defined(freebsd_HOST_OS)
     SSL.contextSetCAFile ctx "/usr/local/etc/ssl/cert.pem"
-    SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
+    return True
 #elif defined(openbsd_HOST_OS)
     SSL.contextSetCAFile ctx "/etc/ssl/cert.pem"
-    SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
+    return True
 #else
-    fedora <- doesDirectoryExist "/etc/pki/tls"
-    if fedora
-        then do
-            SSL.contextSetCAFile ctx "/etc/pki/tls/certs/ca-bundle.crt"
-        else do
-            SSL.contextSetCADirectory ctx "/etc/ssl/certs"
-    SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
+    hasFedoraEtcPkiTls <- doesDirectoryExist "/etc/pki/tls"
+    if hasFedoraEtcPkiTls
+      then do
+        SSL.contextSetCAFile ctx "/etc/pki/tls/certs/ca-bundle.crt"
+        return True
+      else do
+        -- Setting this as fallback effectively will cause systems to
+        -- either fail to verify any certificates (if peer
+        -- verification is enabled) if the folder doesn't exist.
+        SSL.contextSetCADirectory ctx "/etc/ssl/certs"
+        return True
 #endif
-    return ctx
 
 
 parseURL :: URL -> URI

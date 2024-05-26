@@ -4,16 +4,16 @@ branches: master
 
 installed: +all
 
--- Test core libraries in versions newer than shipped with GHC
-constraint-set latest-core-libs-Sep-2023
-  constraints: bytestring >= 0.12
-  constraints: containers >= 0.7
-  -- constraints: text       >= 2.1
-  ghc: >=8.2 && < 9.7
-  tests: True
-  run-tests: True
+-- -- Test core libraries in versions newer than shipped with GHC
+-- constraint-set latest-core-libs-Sep-2023
+--   constraints: bytestring >= 0.12
+--   constraints: containers >= 0.7
+--   -- constraints: text       >= 2.1
+--   ghc: >=8.2 && < 9.7
+--   tests: True
+--   run-tests: True
 
-raw-project
-  allow-newer: bytestring
-  allow-newer: containers
-  -- allow-newer: text
+-- raw-project
+--   allow-newer: bytestring
+--   allow-newer: containers
+--   -- allow-newer: text

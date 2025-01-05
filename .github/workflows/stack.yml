@@ -1,0 +1,97 @@
+name: Stack
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: Stack ${{ matrix.ghc }} ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:  [ubuntu-latest]
+        ghc: ['9.10', '9.8', '9.6', '9.4', '9.2']
+        include:
+          - os: macos-latest
+            ghc: '9.10'
+          - os: windows-latest
+            ghc: '9.10'
+
+    env:
+      ARGS:  "--stack-yaml=stack-${{ matrix.ghc }}.yaml --no-terminal --system-ghc"
+      XARGS: "--stack-yaml=stack-${{ matrix.ghc }}.yaml --no-terminal --system-ghc --flag HsOpenSSL:use-pkg-config"
+
+    # Needed for Windows to make piping (... >> ...) and evaluation ( $(...) ) work.
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: haskell-actions/setup@v2
+      id: setup
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        enable-stack: true
+        cabal-update: false
+
+    - name: Set up the openssl library (MacOS)
+      if: runner.os == 'macOS'
+      run: |
+        echo "PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"
+        echo "PKG_CONFIG_PATH=$(brew --prefix)/opt/openssl/lib/pkgconfig" >> "${GITHUB_ENV}"
+
+    - name: Install the brotli library (Windows)
+      if: runner.os == 'Windows'
+        # Andreas Abel, 2022-02-15 / 2025-01-07:
+        # Stack might be packing an old version of MSYS2.
+        # To work around certification problems, we update msys2-keyring.
+      run: |
+        stack exec ${{ env.ARGS }} -- pacman --noconfirm -Sy msys2-keyring
+        stack exec ${{ env.ARGS }} -- pacman --noconfirm -S mingw-w64-x86_64-pkgconf
+        stack exec ${{ env.ARGS }} -- pacman --noconfirm -S mingw-w64-x86_64-brotli
+        stack exec ${{ env.ARGS }} -- pacman --noconfirm -S mingw-w64-x86_64-openssl
+
+    - name: Install the brotli library (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install libbrotli-dev -qq
+
+    - name: Restore cache
+      uses: actions/cache/restore@v4
+      id: cache
+      env:
+        key: ${{ runner.os }}-stack-${{ steps.setup.outputs.stack-version }}-ghc-${{ steps.setup.outputs.ghc-version }}
+      with:
+        key: ${{ env.key }}-commit-${{ github.sha }}
+        restore-keys: ${{ env.key }}-
+        path: |
+          ${{ steps.setup.outputs.stack-root }}
+          .stack-work
+
+    - name: Build dependencies
+      run:  stack build ${{ env.XARGS }} --only-dependencies
+
+    - name: Build
+      run:  stack build ${{ env.XARGS }}
+
+    - name: Build tests
+      run:  stack test ${{ env.XARGS }} --no-run-tests
+
+    - name: Run tests
+      run:  stack test ${{ env.XARGS }}
+
+    - name: Save cache
+      uses: actions/cache/save@v4
+      if: always()
+      with:
+        key: ${{ steps.cache.outputs.cache-primary-key }}
+        path: |
+          ${{ steps.setup.outputs.stack-root }}
+          .stack-work

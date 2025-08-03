@@ -10,7 +10,7 @@
 
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS -fno-warn-unused-imports #-}
+{-# OPTIONS -Wno-unused-imports #-}
 
 module Snippet where
 

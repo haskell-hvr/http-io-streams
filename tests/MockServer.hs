@@ -10,15 +10,8 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PackageImports    #-}
-{-# OPTIONS -fno-warn-dodgy-imports #-}
 
 module MockServer (runMockServer, localPort) where
-
-{-
-    Per http://hackage.haskell.org/trac/ghc/ticket/7167, we suppress
-    the warning resulting from this line, necessary on <7.6
--}
-import Prelude hiding (catch)
 
 import Control.Applicative
 import Control.Concurrent (forkIO, threadDelay)
@@ -320,5 +313,3 @@ debug cs = do
         hPutStrLn stderr ""
         hPutStrLn stderr cs
         hFlush stderr
-
-

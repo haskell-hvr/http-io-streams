@@ -76,10 +76,6 @@ import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
 import System.IO.Unsafe (unsafePerformIO)
 
-#if !MIN_VERSION_base(4,8,0)
-import Data.Monoid (Monoid (..), mappend)
-#endif
-
 import Network.Http.Connection
 import Network.Http.RequestBuilder
 import Network.Http.Types

@@ -9,7 +9,7 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS -fno-warn-unused-do-bind #-}
+{-# OPTIONS -Wno-unused-do-bind #-}
 
 import Criterion.Main
 import GHC.Conc

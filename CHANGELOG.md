@@ -1,5 +1,12 @@
 See also http://pvp.haskell.org/faq
 
+### 0.1.7.1
+
+* Drop support for GHC 7.
+* Drop unused dependency `system-filepath`.
+
+Tested with GHC 8.0 - 9.12.2.
+
 ### 0.1.7.0
 
 * New function `voidContextSSL` for creating a _void_ SSL Context which rejects any TLS handshake attempts

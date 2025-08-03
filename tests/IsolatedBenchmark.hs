@@ -9,8 +9,8 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS -fno-warn-unused-do-bind #-}
-{-# OPTIONS -fno-warn-unused-imports #-}
+{-# OPTIONS -Wno-unused-do-bind #-}
+{-# OPTIONS -Wno-unused-imports #-}
 
 import qualified Blaze.ByteString.Builder as Builder (copyByteString,
                                                       copyByteString,

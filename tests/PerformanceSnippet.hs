@@ -9,8 +9,8 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS -fno-warn-unused-imports #-}
-{-# OPTIONS -fno-warn-unused-do-bind #-}
+{-# OPTIONS -Wno-unused-imports #-}
+{-# OPTIONS -Wno-unused-do-bind #-}
 
 module Snippet where
 

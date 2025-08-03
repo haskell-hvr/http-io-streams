@@ -10,8 +10,8 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PackageImports    #-}
-{-# OPTIONS -fno-warn-unused-do-bind #-}
-{-# OPTIONS -fno-warn-unused-imports #-}
+{-# OPTIONS -Wno-unused-do-bind #-}
+{-# OPTIONS -Wno-unused-imports #-}
 
 module BaselinePoint (series, actual) where
 

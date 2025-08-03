@@ -4,6 +4,10 @@ branches: master
 
 installed: +all
 
+-- Andreas, 2025-08-03
+-- library entropy does not build with GHC 8.0
+tests: >=8.2
+
 -- -- Test core libraries in versions newer than shipped with GHC
 -- constraint-set latest-core-libs-Sep-2023
 --   constraints: bytestring >= 0.12

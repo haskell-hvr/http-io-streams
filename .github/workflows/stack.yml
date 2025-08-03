@@ -14,12 +14,12 @@ jobs:
       fail-fast: false
       matrix:
         os:  [ubuntu-latest]
-        ghc: ['9.10', '9.8', '9.6', '9.4', '9.2']
+        ghc: ['9.12', '9.10', '9.8', '9.6', '9.4', '9.2']
         include:
           - os: macos-latest
-            ghc: '9.10'
+            ghc: '9.12'
           - os: windows-latest
-            ghc: '9.10'
+            ghc: '9.12'
 
     env:
       ARGS:  "--stack-yaml=stack-${{ matrix.ghc }}.yaml --no-terminal --system-ghc"

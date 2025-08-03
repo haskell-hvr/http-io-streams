@@ -1,0 +1,7 @@
+resolver: nightly-2025-08-02
+
+extra-deps:
+- snap-1.1.3.3
+- pwstore-fast-2.4.4
+- cryptohash-0.11.9
+- cryptonite-0.30

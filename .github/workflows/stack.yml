@@ -84,8 +84,9 @@ jobs:
     - name: Build tests
       run:  stack test ${{ env.XARGS }} --no-run-tests
 
-    - name: Run tests
-      run:  stack test ${{ env.XARGS }}
+    # Andreas, 2025-08-03, tests are broken on CI images.
+    # - name: Run tests
+    #   run:  stack test ${{ env.XARGS }}
 
     - name: Save cache
       uses: actions/cache/save@v4

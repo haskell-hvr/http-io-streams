@@ -239,9 +239,6 @@ jobs:
       - name: build
         run: |
           $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --write-ghc-environment-files=always
-      - name: tests
-        run: |
-          if [ $((HCNUMVER >= 80200)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --test-show-details=direct ; fi
       - name: cabal check
         run: |
           cd ${PKGDIR_http_io_streams} || false

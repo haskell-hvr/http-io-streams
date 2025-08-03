@@ -8,6 +8,13 @@ installed: +all
 -- library entropy does not build with GHC 8.0
 tests: >=8.2
 
+-- Andreas, 2025-08-03
+-- Tests are broken on CI for unknown reasons.
+-- "Network.Socket.connect: <socket: NNN>: does not exist (Connection refused)"
+-- Maybe "localhost" (MockServer) does not resolve on these images?
+-- https://stackoverflow.com/questions/33874370/exception-connect-does-not-exist-connection-refused-when-trying-to-connect-t
+run-tests: False
+
 -- -- Test core libraries in versions newer than shipped with GHC
 -- constraint-set latest-core-libs-Sep-2023
 --   constraints: bytestring >= 0.12

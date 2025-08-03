@@ -10,7 +10,6 @@
 -- the BSD licence.
 --
 
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DoAndIfThenElse    #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS_HADDOCK hide, not-home #-}

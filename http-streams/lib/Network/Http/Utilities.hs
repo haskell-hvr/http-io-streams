@@ -19,7 +19,6 @@
 --
 
 {-# LANGUAGE BangPatterns       #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE MagicHash          #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE Rank2Types         #-}

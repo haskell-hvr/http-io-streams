@@ -1,5 +1,4 @@
 {-# LANGUAGE BangPatterns       #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE NamedFieldPuns     #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE RecordWildCards    #-}
@@ -69,7 +68,6 @@ import qualified Data.CaseInsensitive     as CI
 import           Data.IORef
 import           Data.Maybe               (isJust)
 import           Data.Monoid              (Monoid (..))
-import           Data.Typeable            (Typeable)
 import           Data.Word
 import           Data.XOR                 (xor32LazyByteString, xor32StrictByteString')
 import           Network.Http.Client      as HC
@@ -83,7 +81,7 @@ import qualified System.IO.Streams        as Streams
 --
 -- @since 0.1.4.0
 data WsException = WsException String
-  deriving (Typeable,Show)
+  deriving (Show)
 
 instance Exception WsException
 
@@ -618,4 +616,3 @@ wsUpgradeConnection conn resource rqmod wskey failedToUpgrade success = do
       success resp conn
   where
     abort msg = throwIO (WsException ("wsUpgradeConnection: "++msg))
-

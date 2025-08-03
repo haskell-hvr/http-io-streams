@@ -12,7 +12,6 @@
 
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE CPP                #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE MagicHash          #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS_HADDOCK hide, not-home #-}
@@ -62,7 +61,6 @@ import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Data.List (intersperse)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import Data.Typeable (Typeable)
 import Data.Word (Word16)
 import GHC.Exts (Int(..), word2Int#, uncheckedShiftRL#)
 #if MIN_VERSION_base(4,16,0)
@@ -603,7 +601,7 @@ splitURI old new' =
 
 
 data TooManyRedirects = TooManyRedirects Int
-        deriving (Typeable, Show, Eq)
+        deriving (Show, Eq)
 
 instance Exception TooManyRedirects
 
@@ -765,7 +763,6 @@ concatHandler' p i =
     m = getStatusMessage p
 
 data HttpClientError = HttpClientError Int ByteString
-        deriving (Typeable)
 
 instance Exception HttpClientError
 

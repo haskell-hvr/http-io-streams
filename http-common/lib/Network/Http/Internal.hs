@@ -11,7 +11,6 @@
 
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE CPP                #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS_HADDOCK hide, prune #-}
 
@@ -75,7 +74,6 @@ import Data.Map (Map)
 import Data.Int (Int64)
 import Data.List (foldl')
 import Data.Monoid as Mon (mconcat, mempty)
-import Data.Typeable (Typeable)
 import Data.Word (Word16)
 
 {-
@@ -472,6 +470,6 @@ down (k, v) =
     (original k, v)
 
 data HttpParseException = HttpParseException String
-        deriving (Typeable, Show)
+        deriving (Show)
 
 instance Exception HttpParseException

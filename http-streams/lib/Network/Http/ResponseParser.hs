@@ -17,7 +17,6 @@
 
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE CPP                #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS_HADDOCK hide, not-home #-}
 
@@ -42,7 +41,6 @@ import qualified Data.ByteString.Char8 as S
 import Data.CaseInsensitive (mk)
 import Data.Char (ord)
 import Data.Int (Int64)
-import Data.Typeable (Typeable)
 import System.IO.Streams (Generator, InputStream)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
@@ -174,7 +172,7 @@ readDecimal str' =
 {-# INLINE readDecimal #-}
 
 data UnexpectedCompression = UnexpectedCompression String
-        deriving (Typeable, Show)
+        deriving (Show)
 
 instance Exception UnexpectedCompression
 

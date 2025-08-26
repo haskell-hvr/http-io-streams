@@ -8,9 +8,13 @@
 -- redistribute it and/or modify it under a BSD licence.
 --
 
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -Wno-unused-imports #-}
+#if __GLASGOW_HASKELL__ >= 900
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
+#endif
 
 module TestSuite where
 

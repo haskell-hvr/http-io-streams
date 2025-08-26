@@ -1,5 +1,11 @@
 See also http://pvp.haskell.org/faq
 
+### 0.1.7.2
+
+* Fix compilations with `-Werror={unused-packages,incomplete-uni-patterns}`.
+
+Tested with GHC 8.0 - 9.14 alpha1.
+
 ### 0.1.7.1
 
 * Drop support for GHC 7.

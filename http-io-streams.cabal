@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                http-io-streams
-version:             0.1.7.1
+version:             0.1.7.2
 
 synopsis:            HTTP and WebSocket client based on io-streams
 description:
@@ -79,7 +79,6 @@ common settings
     , network-uri         ^>= 2.6.1.0
     , openssl-streams     ^>= 1.2.1.3
     , text                ^>= 1.2.3.0 || ^>= 2.0     || ^>= 2.1
-    , transformers        ^>= 0.5.2.0 || ^>= 0.6.0.4
 
   default-language:  Haskell2010
   other-extensions:
@@ -170,7 +169,6 @@ test-suite test
     , hspec-expectations
     , HUnit
     , lifted-base
-    , snap
     , snap-core
     , snap-server
     , unordered-containers
